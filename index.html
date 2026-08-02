@@ -1,0 +1,1045 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LC480 .ixo Analyzer - offline</title>
+<style>
+  :root{--bg:#f6f7f9;--card:#fff;--line:#dde2e8;--ink:#1e2732;--mut:#67707c;--grn:#1b7837;--red:#c0392b;--amb:#d97706;--blu:#1f6feb}
+  *{box-sizing:border-box}
+  body{font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;margin:0;background:var(--bg);color:var(--ink);font-size:14px;line-height:1.45}
+  header{background:#0f2c4d;color:#fff;padding:14px 20px}
+  header h1{margin:0;font-size:18px}
+  header .sub{opacity:.88;font-size:12px;margin-top:3px}
+  .wrap{max-width:1260px;margin:0 auto;padding:18px 20px 70px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:16px;margin:14px 0;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+  h2{font-size:15px;margin:0 0 10px} h3{font-size:13px;margin:15px 0 6px;color:#38424e}
+  .drop{border:2px dashed #b8c2cf;border-radius:8px;padding:24px;text-align:center;background:#fbfcfd;cursor:pointer}
+  .drop.hover{border-color:var(--blu);background:#eef5ff}
+  button{background:var(--blu);color:#fff;border:0;border-radius:6px;padding:8px 14px;font-size:13px;cursor:pointer}
+  button.sec{background:#e9edf2;color:#22303c} button.mini{padding:3px 9px;font-size:12px} button:disabled{opacity:.5;cursor:default}
+  label{font-size:13px}
+  select,input[type=text],input[type=number]{border:1px solid var(--line);border-radius:6px;padding:6px 8px;font-size:13px;background:#fff;min-width:0}
+  textarea{width:100%;min-height:140px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;border:1px solid var(--line);border-radius:6px;padding:10px}
+  table{border-collapse:collapse;width:100%;font-size:12.5px}
+  th,td{border-bottom:1px solid var(--line);padding:5px 8px;text-align:left;white-space:nowrap}
+  th{background:#f0f3f6;position:sticky;top:0}
+  .scroll{max-height:460px;overflow:auto;border:1px solid var(--line);border-radius:6px}
+  .pill{display:inline-block;padding:1px 8px;border-radius:20px;font-size:11px;font-weight:600}
+  .ok{background:#e7f6ec;color:var(--grn)} .bad{background:#fdecea;color:var(--red)} .warn{background:#fdf3e6;color:var(--amb)} .neu{background:#eef1f4;color:#5b6672} .info{background:#e8f0fe;color:#1b56b8}
+  .runcard{border:1px solid var(--line);border-radius:8px;padding:12px;margin:10px 0;background:#fff}
+  .runhead{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+  .kv{color:var(--mut);font-size:12px}.kv b{color:var(--ink)}
+  .mono{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11px;color:#41505f;word-break:break-all}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px 18px;align-items:end}
+  .field{display:flex;flex-direction:column;gap:3px}.field>span{font-size:11px;color:var(--mut)}
+  .row{display:flex;gap:14px;flex-wrap:wrap;align-items:center}
+  canvas{background:#fff;border:1px solid var(--line);border-radius:6px;max-width:100%}
+  .muted{color:var(--mut)}.tag{font-size:11px;background:#eef1f4;color:#41505f;border-radius:4px;padding:1px 6px}
+  a.dl{cursor:pointer;color:var(--blu);text-decoration:none;font-size:12px;margin-right:14px}
+  .err{color:var(--red);font-size:12px}.notice{border-left:3px solid var(--blu);background:#f4f8ff;padding:8px 10px;font-size:12px}
+  code{background:#eef1f4;padding:1px 5px;border-radius:4px;font-size:12px}
+  details{margin-top:10px}summary{cursor:pointer;font-size:12px;color:var(--blu)}
+  .evlog{font-size:12px;margin:6px 0 0;border-left:2px solid var(--line);padding-left:10px}.evlog div{margin:2px 0}
+  .ctrlrule{display:grid;grid-template-columns:150px minmax(220px,1fr) auto;gap:8px;align-items:center;margin:4px 0}
+  .qcrule{display:grid;grid-template-columns:140px minmax(150px,1fr) 110px 75px 75px 85px minmax(130px,1fr) auto;gap:6px;align-items:center;margin:5px 0}
+  .qcrule .range.na{opacity:.35}
+  .rulehead{font-size:10px;color:var(--mut);text-transform:uppercase;letter-spacing:.03em}
+  .rulehelp{margin:6px 0 9px;font-size:12px;color:var(--mut)}
+  .regexhelp{margin:7px 0 9px;border-left:3px solid var(--blu);background:#f4f8ff;padding:9px 11px;font-size:12px}
+  .regexhelp p{margin:0 0 6px}.regexhelp ul{margin:5px 0 0;padding-left:20px}.regexhelp li{margin:3px 0}
+  @media(max-width:900px){.qcrule{grid-template-columns:1fr 1fr}.qcrule .wide{grid-column:1/-1}.ctrlrule{grid-template-columns:1fr}}
+
+  #reportWrap{display:none;font-size:11px;color:#111}
+  @page{size:A4 landscape;margin:9mm}
+  @media print{
+    body>*:not(#reportWrap){display:none!important}
+    #reportWrap{display:block!important}
+    body{background:#fff}
+    #reportWrap{max-width:none}
+    #reportWrap h1,#reportWrap h2,#reportWrap h3{break-after:avoid}
+    #reportWrap tr,#reportWrap img{break-inside:avoid}
+  }
+  #reportWrap .rpt{max-width:930px;margin:0 auto;padding:10px 6px}
+  #reportWrap h1{font-size:18px;margin:0 0 2px}
+  #reportWrap h2{font-size:14px;border-bottom:1px solid #999;padding-bottom:3px;margin:16px 0 6px}
+  #reportWrap h3{font-size:12px;margin:10px 0 4px;color:#333}
+  #reportWrap table{width:100%;border-collapse:collapse;font-size:9.5px}
+  #reportWrap th,#reportWrap td{border:1px solid #cfd6de;padding:2px 5px;text-align:left;white-space:normal;overflow-wrap:anywhere;vertical-align:top}
+  #reportWrap .runsec{page-break-before:always}
+  #reportWrap .rmono{font-family:ui-monospace,Consolas,monospace;font-size:8.5px;word-break:break-all}
+  #reportWrap img{border:1px solid #cfd6de;max-width:100%;margin:4px 0}
+  #reportWrap .sev-Normal{color:#1b7837;font-weight:700}
+  #reportWrap .sev-Review{color:#b46900;font-weight:700}
+  #reportWrap .sev-Suspicious{color:#c0392b;font-weight:700}
+  #reportWrap .signature{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:12px 0}
+  #reportWrap .sigbox{border:1px solid #777;min-height:105px;padding:8px}
+  #reportWrap .sigline{border-bottom:1px solid #555;height:28px;margin-top:8px}
+  #reportWrap .small{font-size:8.5px;color:#555}
+</style>
+</head>
+<body>
+<header>
+  <h1>LightCycler 480 <code style="font-size:15px">.ixo</code> Analyzer</h1>
+  <div class="sub">100% offline. Decodes stored Cp/Cq, calls and raw curves; applies target-specific thesis QC; computes the thesis WoL efficiency index; records provenance; and creates a signature-ready evidence report and checksum bundle. Stored Cq is never re-estimated.</div>
+</header>
+<div class="wrap">
+  <div class="card">
+    <h2>1 - Load runs</h2>
+    <div id="drop" class="drop">
+      <div style="font-size:15px">Drop <b>.ixo</b> files or a <b>.zip</b> archive here</div>
+      <div class="muted" style="margin:6px 0 10px">or</div>
+      <button id="pick">Choose files</button>
+      <input id="file" type="file" multiple accept=".ixo,.IXO,.zip" style="display:none">
+      <div class="muted" style="margin-top:8px;font-size:12px">ZIP entry size and CRC-32 are verified. RAR is not supported.</div>
+    </div>
+    <div id="loadmsg" class="muted" style="margin-top:8px"></div>
+  </div>
+
+  <div class="card">
+    <h2>2 - Lab profile and acceptance rules</h2>
+    <p class="muted" style="margin:0 0 9px">Sample roles are assigned by the first non-empty regular expression that matches. Target-specific acceptance rules then decide whether that target must amplify in a stored Cq interval or must stay clean.</p>
+    <div class="grid">
+      <div class="field"><span>Profile name</span><input type="text" id="pName" placeholder="e.g. GMO screening SOP"></div>
+      <div class="field"><span>Analyst / report owner</span><input type="text" id="pAnalyst" placeholder="Printed name"></div>
+      <div class="field"><span>Reviewer</span><input type="text" id="pReviewer" placeholder="Printed name"></div>
+      <div class="field"><span>Replicate scheme</span>
+        <select id="pRepMode">
+          <option value="pair">Trailing pair (A-B / C-D)</option>
+          <option value="letter">Trailing letter (A-H)</option>
+          <option value="custom">Custom regex</option>
+          <option value="none">None</option>
+        </select>
+      </div>
+      <div class="field" id="repCustomWrap" style="display:none"><span>Custom replicate regex</span><input type="text" id="pRepRegex"></div>
+      <div class="field"><span>Maximum replicate spread (stored Cq)</span><input type="number" id="pRepSpread" min="0.1" max="10" step="0.1"></div>
+      <div class="field"><span>Non-detect convention</span><input type="text" value="Stored CrossingPoint = 0 / absent (display ND)" disabled></div>
+    </div>
+
+    <h3>Efficiency output</h3>
+    <div class="row">
+      <label><input type="checkbox" id="mWol" checked> Thesis WoL index (Equation XII.1 / Appendix C.3)</label>
+      <label><input type="checkbox" id="mSli"> Exploratory sliwin-style proxy (not the qpcR package)</label>
+    </div>
+    <div class="notice" style="margin-top:7px">Exact LinRegPCR and qpcR are not relabeled browser calculations. The evidence bundle contains RDML input for the local RDML-Python/LinRegPCR implementation, baseline-subtracted curve tables, and a thesis-aligned qpcR R script.</div>
+
+    <h3>Sample classification rules <span class="muted">(first match wins)</span></h3>
+<div class="rulehelp">These rules inspect the <b>sample name</b> and assign its role. The first matching row is used; unmatched samples remain <b>Sample</b>. Choose <b>exactly</b>, <b>hyphen exactly</b> or <b>every target</b> from the dropdown and enter the sample/control name (for example <code>CN PORUMB</code>, <code>NTC</code> or <code>415b</code>), <b>not target names such as HMG or 35S</b>.</div>
+    <div class="ctrlrule rulehead">
+      <span>Assigned sample role</span><span>Sample-name pattern / regex</span><span>Action</span>
+    </div>
+    <div id="ctrlRules"></div>
+    <button class="sec mini" id="addRule">+ Add classification rule</button>
+
+    <h3>Target-specific QC acceptance rules</h3>
+    <div class="rulehelp">Use the dropdown to choose <b>exactly</b>, <b>hyphen exactly</b> or <b>every target</b>. For custom regex choose <b>custom regex</b>. <code>^</code> means start, <code>$</code> means end, parentheses group alternatives, and <code>.*</code> is a wildcard for any target name.</div>
+    <div class="qcrule rulehead">
+      <span>Sample role</span><span>Target-name pattern / regex</span><span>Expected</span><span>Cq min</span><span>Cq max</span><span>Required</span><span>Evidence label</span><span></span>
+    </div>
+    <div id="qcRules"></div>
+    <button class="sec mini" id="addQCRule">+ Add acceptance rule</button>
+
+    <div style="margin-top:14px" class="row">
+      <button id="analyze">Analyze</button>
+      <button id="dlProfile" class="sec">Download profile JSON</button>
+      <button id="upProfile" class="sec">Upload profile JSON</button>
+      <input id="profileFile" type="file" accept=".json" style="display:none">
+      <button id="resetprof" class="sec">Reset thesis defaults</button>
+    </div>
+    <div id="proferr" class="err" style="margin-top:6px"></div>
+    <details><summary>Advanced: view/edit raw JSON</summary>
+      <textarea id="rawjson" spellcheck="false"></textarea>
+      <button class="sec mini" id="applyRaw" style="margin-top:6px">Apply raw JSON to form</button>
+    </details>
+  </div>
+
+  <div id="results" style="display:none">
+    <div class="card">
+      <h2>3 - Summary and evidence export</h2>
+      <div id="summary" class="kv"></div>
+      <div style="margin-top:10px" class="row">
+        <button id="dlReport">Generate signature-ready PDF report</button>
+        <button id="dlEvidence">Download complete evidence bundle (.zip)</button>
+        <button id="dlResults" class="sec">Results CSV</button>
+        <button id="dlQC" class="sec">QC + forensic CSV</button>
+      </div>
+      <div id="evidmsg" class="muted" style="margin-top:7px;font-size:12px">The evidence ZIP includes source inputs, extracted IXO files, SHA-256 checksums, graph PNGs, CSV, RDES, RDML, qpcR-ready data/script, report HTML and a manifest fingerprint.</div>
+    </div>
+    <div class="card"><h2>Runs, QC and forensic event log</h2><div id="runs"></div></div>
+    <div class="card">
+      <h2>Amplification curves</h2>
+      <div class="row"><label>Run <select id="curveRun"></select></label><label>Target <select id="curveTgt"></select></label><label><input type="checkbox" id="logY"> log scale</label></div>
+      <canvas id="plot" width="1180" height="390" style="margin-top:10px"></canvas>
+    </div>
+    <div class="card"><h2>Per-well stored results <span class="muted" id="wellcount"></span></h2><div class="scroll"><table id="welltable"></table></div></div>
+  </div>
+
+  <div class="card">
+    <h2>About and methods</h2>
+    <p class="muted" style="margin:0">The analyzer reads the vendor's stored <code>CrossingPoint</code> and <code>Call</code>; it never estimates or replaces Cq. Raw fluorescence is decoded from <code>AcquisitionStore</code> (Base64 - zlib - inner XML - little-endian float32). The browser efficiency value is the original thesis window-of-linearity (WoL) index with the documented gates R2 &gt;= 0.98 and 30% &lt; E &lt; 140%. Exact LinRegPCR remains the RDML-Python/desktop reference; exact qpcR remains the R <code>l4 + sliwin</code> reference. The report contains signature fields and cryptographic evidence fingerprints, but the printed PDF is not itself a qualified electronic signature.</p>
+  </div>
+
+  <div class="card">
+    <h2>Target-specific QC acceptance rules — instructions</h2>
+    <div class="regexhelp">
+      <p><b>How the two tables work:</b> sample name &rarr; assigned role &rarr; target name &rarr; expected stored result. For example, <code>CN PORUMB</code> is classified as <b>Negative</b>; its <code>HMG</code> target must amplify at stored Cq 20&ndash;27, while its <code>35S</code> and <code>T-NOS</code> targets must stay clean.</p>
+      <p><b>Target-name pattern / regex</b> is matched only against the assay/target name stored in the IXO. Enter targets here (for example <code>HMG</code>, <code>LEC</code>, <code>35S</code> or <code>T-NOS</code>), <b>not sample/control names such as CN PORUMB or NTC</b>. Matching is case-insensitive.</p>
+      <ul>
+        <li><code>^HMG$</code> &mdash; exactly HMG.</li>
+        <li><code>^(HMG|LEC)$</code> &mdash; exactly HMG or LEC; <code>|</code> means OR.</li>
+        <li><code>^(35S|T-?NOS)$</code> &mdash; 35S, TNOS or T-NOS; <code>?</code> makes the hyphen optional.</li>
+        <li><code>^IPC$</code> &mdash; exactly IPC, useful for one named internal control target.</li>
+        <li><code>.*</code> &mdash; every target. Use this for NTC/blank rules only when every channel must stay clean.</li>
+      </ul>
+      <p style="margin-top:6px"><code>^</code> means start, <code>$</code> means end, parentheses group alternatives, and <code>.*</code> is a wildcard for any target name.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Theoretical background and methods</h2>
+    <div class="muted" style="margin:0 0 10px;font-size:12px">This section restates the thesis-level theory behind every quantity the analyzer reports. Cite the thesis (Chapter references) when reproducing any of these arguments in a report or SOP.</div>
+
+    <h3>1. The .ixo format and the decoding pipeline</h3>
+    <p class="muted" style="margin:0 0 8px">A LightCycler 480 <code>.ixo</code> result file is a single XML document whose root is <code>&lt;objectstream&gt;</code>. The structural layer is human-readable UTF-8 XML; binary data appear only inside specific leaf elements, always wrapped in a text-safe encoding (Chapter V.1). The file therefore yields to a two-stage read — recover the XML, then decode the encoded leaves — rather than to byte-offset parsing.</p>
+    <p class="muted" style="margin:0 0 8px">Three recurring primitives traverse the whole file: <code>&lt;obj class="ClassName"&gt;</code> for typed objects, <code>&lt;prop name="PropName"&gt;value&lt;/prop&gt;</code> for scalar fields, and <code>&lt;list name="ListName"&gt;</code> for ordered collections. The same three primitives recur at every level, so a single generic reader traverses the whole file (Chapter V.1, Listing V.1).</p>
+    <p class="muted" style="margin:0 0 8px">The raw fluorescence — the primary datum whose loss would make the run unreproducible — is not stored as XML in the outer document. It is held in a single property, the <b>AcquisitionStore</b>, as a compressed, doubly-encoded blob. Decoding it proceeds in three stages: <b>Base64</b> text → a <b>zlib/DEFLATE</b> stream (header <code>0x78 0x9C</code>) → an <b>inner XML</b> document. The inner XML is itself an object graph: a list of cycles, each holding a list of per-channel acquisitions, each carrying a <code>FloPoints</code> property (Chapter V.6, Listing V.3).</p>
+
+    <h3>2. Per-well results: crossing points and calls</h3>
+    <p class="muted" style="margin:0 0 8px">The quantitative result for every well is stored as an object of class <code>QuantSampleB</code> inside the analysis sample list (Chapter V.5, Table V.3). The crossing point (<code>Cp</code>) is the LightCycler's name for the quantification cycle (<code>Cq</code>); a stored value of <code>0.0</code> denotes "no crossing" and must be treated as non-amplification, not as a cycle-zero crossing. Call codes are: <b>0 = Negative</b>, <b>1 = Uncertain</b>, <b>2 = Positive</b>, <b>3 = NotCalculated</b>.</p>
+    <p class="muted" style="margin:0 0 8px">Alongside <code>CrossingPoint</code> the vendor stores quality fields: <code>CpUncertain</code> (boolean), <code>CpState</code> (descriptor), <code>IsIncluded</code> flag, and optional <code>WarnCodes</code>. Propagating these flags through to the final screening decision turns a bare DETECTED/NOT-DETECTED boolean into a call that carries its own confidence (Chapter XI.2).</p>
+
+    <h3>3. Amplification efficiency: the window-of-linearity estimator</h3>
+    <p class="muted" style="margin:0 0 8px">In the exponential phase a curve follows <code>F<sub>c</sub> = F<sub>0</sub>(1 + E)<sup>c</sup></code>, so <code>log<sub>10</sub>(F<sub>c</sub> − β)</code> is linear in cycle <code>c</code> with slope <code>log<sub>10</sub>(1 + E)</code>, where <code>β</code> is the fluorescence baseline. The estimator therefore (i) grid-searches the baseline <code>β</code> just below the observed curve minimum, (ii) selects the <b>window of linearity</b> — the contiguous run of cycles whose baseline-subtracted signal lies between <b>2%</b> and <b>25%</b> of the curve amplitude, i.e. above the noise floor and below the plateau shoulder, (iii) fits <code>log<sub>10</sub>(F<sub>c</sub> − β)</code> against <code>c</code> by least squares, keeping the baseline/window combination with the highest R<sup>2</sup> (rejecting fits with R<sup>2</sup> &lt; 0.98), and (iv) reports</p>
+    <p class="muted" style="margin:0 0 8px;text-align:center;font-family:ui-monospace,Menlo,Consolas,monospace"><b>E = (10<sup>slope</sup> − 1) × 100 %</b></p>
+    <p class="muted" style="margin:0 0 8px">so that a perfect per-cycle doubling gives <code>slope = log<sub>10</sub> 2</code> and <code>E = 100 %</code> (Chapter XII.1, Equation XII.1). The estimator is applied only to wells the instrument called Positive, using the raw fluorescence recovered from the AcquisitionStore; non-amplifying wells have no exponential phase and are skipped. The browser implementation follows this estimator exactly, with the documented gates <b>R<sup>2</sup> ≥ 0.98</b> and <b>30% &lt; E &lt; 140%</b>.</p>
+
+    <h3>4. Two quantities called "efficiency"</h3>
+    <p class="muted" style="margin:0 0 8px"><b>Assay efficiency</b> (from a dilution series). The MIQE-grade quantity is the amplicon or assay efficiency, obtained from a standard/dilution curve of a known template across several concentrations: <code>E = 10<sup>−1/slope</sup> − 1</code>, where "slope" is the slope of Cq plotted against log<sub>10</sub> of template amount. A perfect doubling per cycle gives <code>slope = −3.32</code> and <code>E = 100 %</code>; the ENGL acceptance window <code>slope ∈ [−3.6, −3.1]</code> corresponds to <code>E ∈ [89.6%, 110.2%]</code>. This efficiency needs several wells per sample (the dilution points) and is the number a validation report certifies (Chapter XIV.1, Equation XIV.1).</p>
+    <p class="muted" style="margin:0 0 8px"><b>Single-curve efficiency</b> (from one reaction). The quantity the analyzer recovers is different: it is the per-reaction efficiency read from the shape of one amplification curve. In the exponential phase <code>F<sub>c</sub> = F<sub>0</sub>(1 + E)<sup>c</sup></code>, so <code>log<sub>10</sub>(F<sub>c</sub> − β)</code> is linear in cycle <code>c</code> with slope <code>log<sub>10</sub>(1 + E)</code>; fitting that slope over the window of linearity returns <code>E</code> for a single well (Ramakers et al., 2003; Ruijter et al., 2009, 2013). Crucially, this needs neither a dilution series nor a spike-in — it is a property of the curve itself. The price of that convenience is interpretive: a single-curve slope on raw, uncalibrated fluorescence is biased and noisier than the dilution-series value; it is best read as a <b>relative kinetic index</b>, reproducible enough to compare like with like but not a substitute for the dilution-series efficiency (Chapter XIV.1).</p>
+
+    <h3>5. Inhibition: what it is and how it is detected</h3>
+    <p class="muted" style="margin:0 0 8px">PCR inhibitors — co-extracted polysaccharides, polyphenols, humic acids, EDTA, residual ethanol and the like — "affect the efficiency of target DNA amplification by interacting with the DNA template, by interfering with the DNA polymerase activity or decreasing the efficiency of enzymatic cofactors (Mg<sup>2+</sup>)" (Hougs et al., 2019). Inhibition is therefore, by definition, an efficiency phenomenon, and it leaves three fingerprints on the amplification curve: (i) a delayed onset (higher Cq), (ii) a shallower exponential slope — i.e. a lower per-reaction efficiency — and often (iii) a depressed plateau (Chapter XIV.2).</p>
+    <p class="muted" style="margin:0 0 8px">The <b>ENGL/EURL dilution inhibition test</b> is the method-verification standard for GMO laboratories. The working-concentration extract is taken as "undiluted" and a four-fold series is prepared (1:4, 1:16, 1:64, 1:256, in duplicate). The Cq of each dilution is plotted against log(dilution factor) and fitted by linear regression. An extract is accepted as inhibitor-free only if all three conditions hold: (1) the slope lies between <code>−3.6</code> and <code>−3.1</code> (equivalently <code>E ∈ [90%, 110%]</code>); (2) <code>R<sup>2</sup> ≥ 0.98</code>; and (3) the difference between the measured undiluted Cq and the Cq extrapolated from the dilution line is <code>ΔCq &lt; 0.5</code> cycle (Chapter XIV.3).</p>
+    <p class="muted" style="margin:0 0 8px">The routine screening plate controls inhibition through two safeguards: (1) the <b>endogenous reference target</b> (HMG/LEC) is the routine inhibition monitor — a delayed reference Cq or a depressed reference efficiency flags the extract on the very plate that produced it; and (2) <b>per-well efficiency as a retrospective screen</b> — any reaction whose single-curve efficiency falls more than two robust standard deviations below its target's median is flagged as a candidate for the confirmatory dilution test (Chapter XIV.4–6).</p>
+
+    <h3>6. Cross-validation: LinRegPCR, qpcR and the instrument</h3>
+    <p class="muted" style="margin:0 0 8px">Because the recovered curves can be written out as tidy tables and as RDML, they can be fed unchanged to the two reference implementations of curve analysis — <b>LinRegPCR</b> (Untergasser et al., 2021), run through the RDML-Python library, and <b>qpcR</b> (Ritz and Spiess, 2008), whose four-parameter log-logistic fit yields both a second-derivative-maximum Cq and a per-curve efficiency (Chapter XII.4).</p>
+    <p class="muted" style="margin:0 0 8px">On the crossing point the three methods and the instrument agree very closely: LinRegPCR and qpcR each track the instrument's second-derivative-maximum Cp with a standard deviation of the difference below 0.2 cycle. On efficiency the three window-of-linearity implementations converge once the baseline is handled consistently: WoL, LinRegPCR and qpcR give 71/75/72% for 35S, 75/86/81% for HMG and (LinRegPCR/qpcR) 101/97% for T-nos — agreement to within a few percentage points at R<sup>2</sup> ≈ 1.0. This convergence corroborates both faithful curve recovery and reproducible, order-preserving efficiency (Chapter XII.4).</p>
+
+    <h3>7. QC rules, sample roles and the acceptance framework</h3>
+    <p class="muted" style="margin:0 0 8px">Sample roles are assigned by the <b>first non-empty regular expression that matches</b> the sample name; unmatched samples remain <b>Sample</b>. This is a post-processing classification rather than a vendor field, keeping the plate model general across laboratories (Chapter V.3).</p>
+    <p class="muted" style="margin:0 0 8px">Target-specific acceptance rules then decide, for each assigned role, whether that target must amplify in a stored Cq interval or must stay clean. The rule table is evaluated independently of the sample classification: a well is first classified by its sample name, then each QC rule matching both that role and the well's target is applied. A required rule that finds no matching wells is reported as missing evidence; a matching well that fails the expectation is a QC failure (Chapter X.2).</p>
+    <p class="muted" style="margin:0 0 8px">Replicate agreement is checked by grouping wells that share the same root sample name and target. If all replicates are Positive, their stored Cq spread must not exceed the configured maximum; if all are Negative, they are consistent; mixed calls are a discordant-replicate failure.</p>
+
+    <h3>8. Provenance, integrity and the evidence bundle</h3>
+    <p class="muted" style="margin:0 0 8px">Every input file is SHA-256 hashed at load time; ZIP entries have their CRC-32 verified against the stored value. The evidence bundle contains: source inputs, decoded IXO files, SHA-256 checksums, graph PNGs, CSV exports, RDES and RDML files for LinRegPCR, a qpcR-ready R script, the report HTML, and a manifest with cryptographic fingerprints. The printed/saved PDF is signature-ready but is not itself a qualified electronic signature unless signed with an approved external system (Chapter X.3).</p>
+
+    <h3>9. References (thesis chapters)</h3>
+    <ul class="muted" style="margin:0;padding-left:20px;font-size:12px">
+      <li>Chapter V — The .ixo Format: An Open Specification</li>
+      <li>Chapter X — A Multi-Run Corpus: Scaling, Controls Validation and Provenance</li>
+      <li>Chapter XI — Derived Quantities: Efficiency, Call Uncertainty and Reference-Gene Stability</li>
+      <li>Chapter XII — Amplification Efficiency across the Corpus</li>
+      <li>Chapter XIII — Longitudinal Quality Control: Control Charts for Run Controls</li>
+      <li>Chapter XIV — Inhibition, Efficiency and the Limits of a Single Curve</li>
+      <li>Chapter XVI — Quantitative Screening Verdicts: Direct-Ct and ΔCt</li>
+    </ul>
+  </div>
+
+</div>
+
+<div id="reportWrap"></div>
+
+<script>
+"use strict";
+
+const DEFAULT_PROFILE = {
+  profileName:"",
+  analyst:"",
+  reviewer:"",
+  ndConvention:"Stored CrossingPoint 0 or absent = ND; no Cq estimation",
+  replicate:{mode:"pair",regex:"^(.*?)\\s*[ _-]?([A-H])(?:-([A-H]))?\\s*$"},
+  maxReplicateSpread:1.0,
+  models:{wol:true,sliwinProxy:false},
+  controlRules:[
+    {role:"Positive/CRM",pattern:"POS|CTRL.?\\+|CALIB|STD|^\\s*41[05]"},
+    {role:"NTC",pattern:"NTC"},
+    {role:"Blank",pattern:"BLANK|BLNK"},
+    {role:"Negative",pattern:"NEG|\\bNC\\b|\\bCN\\b"},
+    {role:"Endogenous",pattern:"ENDOG"},
+    {role:"Internal",pattern:"INTERNAL|\\bIPC\\b|\\bIAC\\b"}
+  ],
+  qcRules:[
+    {role:"Positive/CRM",target:"^(35S|T-?NOS)$",expectation:"amplify",min:29,max:36,required:true,label:"CRM / positive element"},
+    {role:"Positive/CRM",target:"^(HMG|LEC)$",expectation:"amplify",min:20,max:27,required:true,label:"CRM endogenous"},
+    {role:"Negative",target:"^(35S|T-?NOS)$",expectation:"clean",min:null,max:null,required:true,label:"Negative control element"},
+    {role:"Negative",target:"^(HMG|LEC)$",expectation:"amplify",min:20,max:27,required:true,label:"CN endogenous - expected amplification"},
+    {role:"NTC",target:".*",expectation:"clean",min:null,max:null,required:true,label:"No-template control"},
+    {role:"Blank",target:".*",expectation:"clean",min:null,max:null,required:true,label:"Extraction / reagent blank"},
+    {role:"Endogenous",target:"^(HMG|LEC)$",expectation:"amplify",min:20,max:27,required:false,label:"Endogenous control"},
+    {role:"Internal",target:".*",expectation:"amplify",min:15,max:35,required:false,label:"Internal amplification control"}
+  ]
+};
+const ROLES=["Positive/CRM","Negative","NTC","Blank","Endogenous","Internal","Sample"];
+const REP_REGEX={
+  pair:"^(.*?)\\s*[ _-]?([A-H])(?:-([A-H]))?\\s*$",
+  letter:"^(.*?)\\s*[ _-]?([A-H])\\s*$",
+  none:""
+};
+const CALL={0:"Negative",1:"Uncertain",2:"Positive",3:"NotCalculated"};
+const $=s=>document.querySelector(s);
+const ce=t=>document.createElement(t);
+const textEncoder=new TextEncoder();
+let RUNS=[];
+let PROFILE_USED=null;
+let LAST_EVIDENCE=null;
+
+function clone(v){return JSON.parse(JSON.stringify(v));}
+function esc(s){return String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]));}
+function xesc(s){return String(s??"").replace(/[&<>'"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&apos;"}[c]));}
+function safeName(s){return String(s||"artifact").replace(/[^\w.-]+/g,"_").replace(/^_+|_+$/g,"")||"artifact";}
+function avg(a){return a.reduce((x,y)=>x+y,0)/a.length;}
+function bytesFrom(data){return data instanceof Uint8Array?data:(typeof data==="string"?textEncoder.encode(data):new Uint8Array(data));}
+function hex32(n){return (n>>>0).toString(16).padStart(8,"0");}
+
+function parsePatternMode(pattern){
+  if(!pattern||pattern.trim()==="")return{mode:"exact",name:""};
+  if(pattern===".*")return{mode:"any",name:""};
+  const m=pattern.match(/^\^(.+)\$$/);
+  if(m){
+    const inner=m[1];
+    if(inner.includes('-?'))return{mode:'hyphen',name:inner.replace(/-\?/g,'-')};
+    return{mode:"exact",name:inner};
+  }
+  return{mode:"custom",name:pattern};
+}
+function buildPattern(mode,name){
+  name=(name||"").trim();
+  if(mode==="any")return".*";
+  if(mode==="exact")return name?`^${name}$`:"";
+  if(mode==='hyphen')return name?`^${name.replace(/-/g,'-?')}$`:'';
+  return name;
+}
+
+/* ---------- profile ---------- */
+function option(value,text,selected){const o=ce("option");o.value=value;o.textContent=text;o.selected=selected;return o;}
+function renderCtrlRules(rules){
+  const box=$("#ctrlRules");box.innerHTML="";
+  rules.forEach((r,i)=>{
+    const row=ce("div");row.className="ctrlrule";
+    const sel=ce("select");ROLES.forEach(role=>sel.appendChild(option(role,role,role===r.role)));
+    const parsed=parsePatternMode(r.pattern||"");
+    const modeSel=ce("select");modeSel.className="mini mode-select";
+    modeSel.appendChild(option("exact","exactly",parsed.mode==="exact"));
+    modeSel.appendChild(option("hyphen","hyphen exactly",parsed.mode==="hyphen"));
+    modeSel.appendChild(option("any","every target",parsed.mode==="any"));
+    modeSel.appendChild(option("custom","custom regex",parsed.mode==="custom"));
+    const nameInp=ce("input");nameInp.type="text";nameInp.className="name-input";nameInp.value=parsed.name;nameInp.placeholder="e.g. HMG or 35S|T-NOS";nameInp.title="Name or names separated by |";nameInp.disabled=parsed.mode==="any";
+    modeSel.onchange=()=>{nameInp.disabled=modeSel.value==="any";};
+    const patWrap=ce("div");patWrap.style.display="flex";patWrap.style.gap="6px";patWrap.appendChild(modeSel);patWrap.appendChild(nameInp);
+    const del=ce("button");del.className="sec mini";del.textContent="Remove";
+    del.onclick=()=>{const list=readCtrlRules();list.splice(i,1);renderCtrlRules(list);};
+    row.append(sel,patWrap,del);box.appendChild(row);
+  });
+}
+function readCtrlRules(){
+  return [...$("#ctrlRules").querySelectorAll(".ctrlrule")].map(row=>({
+    role:row.querySelector("select").value,
+    pattern:buildPattern(row.querySelector(".mode-select").value,row.querySelector(".name-input").value)
+  }));
+}
+function renderQCRules(rules){
+  const box=$("#qcRules");box.innerHTML="";
+  rules.forEach((r,i)=>{
+    const row=ce("div");row.className="qcrule";
+    const role=ce("select");ROLES.filter(x=>x!=="Sample").forEach(x=>role.appendChild(option(x,x,x===r.role)));
+    const parsed=parsePatternMode(r.target||"");
+    const modeSel=ce("select");modeSel.className="mini mode-select";
+    modeSel.appendChild(option("exact","exactly",parsed.mode==="exact"));
+    modeSel.appendChild(option("hyphen","hyphen exactly",parsed.mode==="hyphen"));
+    modeSel.appendChild(option("any","every target",parsed.mode==="any"));
+    modeSel.appendChild(option("custom","custom regex",parsed.mode==="custom"));
+    const nameInp=ce("input");nameInp.type="text";nameInp.className="name-input";nameInp.value=parsed.name;nameInp.placeholder="e.g. HMG or 35S|T-NOS";nameInp.title="Name or names separated by |";nameInp.disabled=parsed.mode==="any";
+    modeSel.onchange=()=>{nameInp.disabled=modeSel.value==="any";};
+    const patWrap=ce("div");patWrap.style.display="flex";patWrap.style.gap="6px";patWrap.appendChild(modeSel);patWrap.appendChild(nameInp);
+    const expectation=ce("select");
+    expectation.append(option("amplify","Amplify in range",r.expectation==="amplify"),option("clean","Stay clean / ND",r.expectation==="clean"));
+    const min=ce("input");min.type="number";min.step="0.1";min.className="range";min.value=r.min==null?"":r.min;
+    const max=ce("input");max.type="number";max.step="0.1";max.className="range";max.value=r.max==null?"":r.max;
+    const req=ce("label");const reqBox=ce("input");reqBox.type="checkbox";reqBox.checked=!!r.required;req.append(reqBox,document.createTextNode(" yes"));
+    const label=ce("input");label.type="text";label.value=r.label||"";label.placeholder="Evidence label";
+    const del=ce("button");del.className="sec mini";del.textContent="Remove";
+    const sync=()=>{const na=expectation.value==="clean";min.disabled=na;max.disabled=na;min.classList.toggle("na",na);max.classList.toggle("na",na);};
+    expectation.onchange=sync;sync();
+    del.onclick=()=>{const list=readQCRules();list.splice(i,1);renderQCRules(list);};
+    row.append(role,patWrap,expectation,min,max,req,label,del);box.appendChild(row);
+  });
+}
+function readQCRules(){
+  return [...$("#qcRules").querySelectorAll(".qcrule")].map(row=>{
+    const inputs=row.querySelectorAll("input");
+    const selects=row.querySelectorAll("select");
+    const expectation=selects[2].value;
+    return {
+      role:selects[0].value,
+      target:buildPattern(row.querySelector(".mode-select").value,row.querySelector(".name-input").value),
+      expectation,
+      min:expectation==="amplify"&&inputs[1].value!==""?Number(inputs[1].value):null,
+      max:expectation==="amplify"&&inputs[2].value!==""?Number(inputs[2].value):null,
+      required:inputs[3].checked,
+      label:inputs[4].value.trim()
+    };
+  });
+}
+function writeForm(p){
+  const prof=p||{};
+  $("#pName").value=prof.profileName||"";
+  $("#pAnalyst").value=prof.analyst||"";
+  $("#pReviewer").value=prof.reviewer||"";
+  const rm=prof.replicate?.mode||"pair";
+  $("#pRepMode").value=rm;
+  $("#repCustomWrap").style.display=rm==="custom"?"flex":"none";
+  $("#pRepRegex").value=prof.replicate?.regex||"";
+  $("#pRepSpread").value=Number(prof.maxReplicateSpread??1).toFixed(1);
+  $("#mWol").checked=prof.models?.wol!==false && prof.models?.linreg!==false;
+  $("#mSli").checked=prof.models?.sliwinProxy===true;
+  renderCtrlRules(prof.controlRules||clone(DEFAULT_PROFILE.controlRules));
+  renderQCRules(prof.qcRules||clone(DEFAULT_PROFILE.qcRules));
+  $("#rawjson").value=JSON.stringify(readForm(),null,2);
+}
+function readForm(){
+  const rm=$("#pRepMode").value;
+  const regex=rm==="custom"?$("#pRepRegex").value.trim():(REP_REGEX[rm]||"");
+  return {
+    profileName:$("#pName").value.trim(),
+    analyst:$("#pAnalyst").value.trim(),
+    reviewer:$("#pReviewer").value.trim(),
+    ndConvention:DEFAULT_PROFILE.ndConvention,
+    replicate:{mode:rm,regex},
+    maxReplicateSpread:Number($("#pRepSpread").value),
+    models:{wol:$("#mWol").checked,sliwinProxy:$("#mSli").checked},
+    controlRules:readCtrlRules(),
+    qcRules:readQCRules()
+  };
+}
+function validateProfile(p){
+  const errors=[];
+  if(!p.controlRules.length)errors.push("At least one sample classification rule is required.");
+  p.controlRules.forEach((r,i)=>{
+    if(!r.pattern)errors.push(`Classification rule ${i+1} has an empty regex.`);
+    else try{new RegExp(r.pattern,"i");}catch(e){errors.push(`Classification rule ${i+1} regex is invalid: ${e.message}`);}
+  });
+  if(p.replicate.regex)try{new RegExp(p.replicate.regex,"i");}catch(e){errors.push(`Replicate regex is invalid: ${e.message}`);}
+  if(!Number.isFinite(p.maxReplicateSpread)||p.maxReplicateSpread<=0)errors.push("Maximum replicate spread must be a positive number.");
+  if(!p.qcRules.length)errors.push("At least one target-specific QC rule is required.");
+  p.qcRules.forEach((r,i)=>{
+    if(!r.target)errors.push(`QC rule ${i+1} has an empty target regex.`);
+    else try{new RegExp(r.target,"i");}catch(e){errors.push(`QC rule ${i+1} target regex is invalid: ${e.message}`);}
+    if(r.expectation==="amplify"&&(!Number.isFinite(r.min)||!Number.isFinite(r.max)||r.min>r.max))errors.push(`QC rule ${i+1} requires a valid Cq interval with min <= max.`);
+  });
+  if(!p.qcRules.some(r=>r.required&&r.expectation==="amplify"))errors.push("At least one required amplification rule is needed (CRM, endogenous or internal control).");
+  if(!p.qcRules.some(r=>r.required&&r.expectation==="clean"))errors.push("At least one required clean rule is needed (NTC, blank or negative control).");
+  return errors;
+}
+$("#pRepMode").onchange=()=>{$("#repCustomWrap").style.display=$("#pRepMode").value==="custom"?"flex":"none";};
+$("#addRule").onclick=()=>{const r=readCtrlRules();r.push({role:"Sample",pattern:""});renderCtrlRules(r);};
+$("#addQCRule").onclick=()=>{const r=readQCRules();r.push({role:"Internal",target:"",expectation:"amplify",min:15,max:35,required:false,label:""});renderQCRules(r);};
+$("#resetprof").onclick=()=>{writeForm(clone(DEFAULT_PROFILE));$("#proferr").textContent="";};
+$("#dlProfile").onclick=()=>dlText((($("#pName").value||"thesis_qc_profile").replace(/\s+/g,"_"))+".json",JSON.stringify(readForm(),null,2),"application/json");
+$("#upProfile").onclick=()=>$("#profileFile").click();
+$("#profileFile").onchange=async e=>{try{writeForm(JSON.parse(await e.target.files[0].text()));$("#proferr").textContent="";}catch(err){$("#proferr").textContent="Bad profile JSON: "+err.message;}};
+$("#applyRaw").onclick=()=>{try{writeForm(JSON.parse($("#rawjson").value));$("#proferr").textContent="";}catch(err){$("#proferr").textContent="Raw JSON error: "+err.message;}};
+writeForm(clone(DEFAULT_PROFILE));
+
+/* ---------- SHA-256 and CRC-32 ---------- */
+function sha256hex(bytes){
+  bytes=bytesFrom(bytes);
+  const K=[0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2];
+  let h=[0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19];
+  const l=bytes.length,withOne=l+1,k=(56-withOne%64+64)%64,total=withOne+k+8;
+  const m=new Uint8Array(total);m.set(bytes);m[l]=0x80;const dv=new DataView(m.buffer);
+  const bits=l*8;dv.setUint32(total-4,bits>>>0,false);dv.setUint32(total-8,Math.floor(bits/0x100000000),false);
+  const rotr=(x,n)=>(x>>>n)|(x<<(32-n));
+  for(let off=0;off<total;off+=64){
+    const w=new Uint32Array(64);for(let i=0;i<16;i++)w[i]=dv.getUint32(off+i*4,false);
+    for(let i=16;i<64;i++){const s0=rotr(w[i-15],7)^rotr(w[i-15],18)^(w[i-15]>>>3),s1=rotr(w[i-2],17)^rotr(w[i-2],19)^(w[i-2]>>>10);w[i]=(w[i-16]+s0+w[i-7]+s1)>>>0;}
+    let [a,b,c,d,e,f,g,hh]=h;
+    for(let i=0;i<64;i++){const S1=rotr(e,6)^rotr(e,11)^rotr(e,25),ch=(e&f)^(~e&g),t1=(hh+S1+ch+K[i]+w[i])>>>0,S0=rotr(a,2)^rotr(a,13)^rotr(a,22),maj=(a&b)^(a&c)^(b&c),t2=(S0+maj)>>>0;hh=g;g=f;f=e;e=(d+t1)>>>0;d=c;c=b;b=a;a=(t1+t2)>>>0;}
+    h=[(h[0]+a)>>>0,(h[1]+b)>>>0,(h[2]+c)>>>0,(h[3]+d)>>>0,(h[4]+e)>>>0,(h[5]+f)>>>0,(h[6]+g)>>>0,(h[7]+hh)>>>0];
+  }
+  return h.map(x=>x.toString(16).padStart(8,"0")).join("");
+}
+const CRC_TABLE=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=(c&1)?0xedb88320^(c>>>1):c>>>1;t[n]=c>>>0;}return t;})();
+function crc32(bytes){bytes=bytesFrom(bytes);let c=0xffffffff;for(const b of bytes)c=CRC_TABLE[(c^b)&255]^(c>>>8);return (c^0xffffffff)>>>0;}
+
+/* ---------- ZIP read and write ---------- */
+async function inflate(bytes,format){return new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream(format))).arrayBuffer());}
+async function readZip(ab,archive){
+  const u8=new Uint8Array(ab),dv=new DataView(ab);let eocd=-1;
+  for(let i=u8.length-22;i>=Math.max(0,u8.length-65557);i--){if(dv.getUint32(i,true)===0x06054b50){eocd=i;break;}}
+  if(eocd<0)throw new Error("not a valid ZIP archive");
+  const count=dv.getUint16(eocd+10,true),cdOff=dv.getUint32(eocd+16,true),out=[];let p=cdOff;
+  for(let n=0;n<count;n++){
+    if(p+46>u8.length||dv.getUint32(p,true)!==0x02014b50)throw new Error("invalid ZIP central directory");
+    const flags=dv.getUint16(p+8,true),method=dv.getUint16(p+10,true),expectedCrc=dv.getUint32(p+16,true),csize=dv.getUint32(p+20,true),usize=dv.getUint32(p+24,true);
+    const nlen=dv.getUint16(p+28,true),elen=dv.getUint16(p+30,true),clen=dv.getUint16(p+32,true),lho=dv.getUint32(p+42,true);
+    const path=new TextDecoder("utf-8").decode(u8.subarray(p+46,p+46+nlen));
+    p+=46+nlen+elen+clen;
+    if(!path.toLowerCase().endsWith(".ixo"))continue;
+    if(flags&1)throw new Error(`encrypted ZIP entry is unsupported: ${path}`);
+    if(lho+30>u8.length||dv.getUint32(lho,true)!==0x04034b50)throw new Error(`invalid local ZIP header: ${path}`);
+    const lnlen=dv.getUint16(lho+26,true),lelen=dv.getUint16(lho+28,true),start=lho+30+lnlen+lelen;
+    if(start+csize>u8.length)throw new Error(`truncated ZIP entry: ${path}`);
+    const comp=u8.subarray(start,start+csize);
+    let raw;if(method===0)raw=new Uint8Array(comp);else if(method===8)raw=await inflate(comp,"deflate-raw");else throw new Error(`unsupported ZIP method ${method}: ${path}`);
+    const actualCrc=crc32(raw);
+    if(raw.length!==usize)throw new Error(`ZIP size mismatch for ${path}`);
+    if(actualCrc!==expectedCrc)throw new Error(`ZIP CRC-32 mismatch for ${path}`);
+    out.push({
+      name:path.split("/").pop(),path,bytes:raw,text:new TextDecoder("utf-8").decode(raw),
+      archive:{name:archive.name,size:archive.size,checksum:archive.checksum},
+      zip:{method,compressedSize:csize,uncompressedSize:usize,crc32:hex32(expectedCrc),crcVerified:true}
+    });
+  }
+  return out;
+}
+function dosStamp(date){
+  const d=date||new Date(),year=Math.max(1980,d.getFullYear());
+  return {time:(d.getHours()<<11)|(d.getMinutes()<<5)|(d.getSeconds()>>1),date:((year-1980)<<9)|((d.getMonth()+1)<<5)|d.getDate()};
+}
+function makeStoredZip(entries){
+  const stamp=dosStamp(new Date()),prepared=entries.map(e=>{const name=textEncoder.encode(e.name.replace(/\\/g,"/")),data=bytesFrom(e.data),crc=crc32(data);return {name,data,crc,offset:0};});
+  let localSize=0,centralSize=0;for(const e of prepared){localSize+=30+e.name.length+e.data.length;centralSize+=46+e.name.length;}
+  const out=new Uint8Array(localSize+centralSize+22),dv=new DataView(out.buffer);let p=0;
+  for(const e of prepared){
+    e.offset=p;dv.setUint32(p,0x04034b50,true);dv.setUint16(p+4,20,true);dv.setUint16(p+6,0x0800,true);dv.setUint16(p+8,0,true);
+    dv.setUint16(p+10,stamp.time,true);dv.setUint16(p+12,stamp.date,true);dv.setUint32(p+14,e.crc,true);dv.setUint32(p+18,e.data.length,true);dv.setUint32(p+22,e.data.length,true);
+    dv.setUint16(p+26,e.name.length,true);dv.setUint16(p+28,0,true);out.set(e.name,p+30);out.set(e.data,p+30+e.name.length);p+=30+e.name.length+e.data.length;
+  }
+  const centralOffset=p;
+  for(const e of prepared){
+    dv.setUint32(p,0x02014b50,true);dv.setUint16(p+4,20,true);dv.setUint16(p+6,20,true);dv.setUint16(p+8,0x0800,true);dv.setUint16(p+10,0,true);
+    dv.setUint16(p+12,stamp.time,true);dv.setUint16(p+14,stamp.date,true);dv.setUint32(p+16,e.crc,true);dv.setUint32(p+20,e.data.length,true);dv.setUint32(p+24,e.data.length,true);
+    dv.setUint16(p+28,e.name.length,true);dv.setUint16(p+30,0,true);dv.setUint16(p+32,0,true);dv.setUint16(p+34,0,true);dv.setUint16(p+36,0,true);dv.setUint32(p+38,0,true);dv.setUint32(p+42,e.offset,true);
+    out.set(e.name,p+46);p+=46+e.name.length;
+  }
+  dv.setUint32(p,0x06054b50,true);dv.setUint16(p+4,0,true);dv.setUint16(p+6,0,true);dv.setUint16(p+8,prepared.length,true);dv.setUint16(p+10,prepared.length,true);
+  dv.setUint32(p+12,p-centralOffset,true);dv.setUint32(p+16,centralOffset,true);dv.setUint16(p+20,0,true);
+  return out;
+}
+
+/* ---------- file intake ---------- */
+const drop=$("#drop");
+drop.addEventListener("dragover",e=>{e.preventDefault();drop.classList.add("hover");});
+drop.addEventListener("dragleave",()=>drop.classList.remove("hover"));
+drop.addEventListener("drop",e=>{e.preventDefault();drop.classList.remove("hover");intake(e.dataTransfer.files);});
+$("#pick").onclick=()=>$("#file").click();
+$("#file").onchange=e=>intake(e.target.files);
+async function intake(fileList){
+  const files=[...fileList],ixos=[],inputs=[];$("#loadmsg").textContent="Reading and hashing evidence...";
+  try{
+    for(const f of files){
+      const ab=await f.arrayBuffer(),bytes=new Uint8Array(ab),checksum=sha256hex(bytes),low=f.name.toLowerCase();
+      if(low.endsWith(".zip")){
+        const archive={name:f.name,size:bytes.length,checksum};
+        inputs.push({name:f.name,kind:"archive",bytes,size:bytes.length,checksum});
+        ixos.push(...await readZip(ab,archive));
+      }else if(low.endsWith(".ixo")){
+        inputs.push({name:f.name,kind:"ixo",bytes,size:bytes.length,checksum});
+        ixos.push({name:f.name,path:f.name,bytes,text:new TextDecoder("utf-8").decode(bytes),archive:null,zip:null});
+      }
+    }
+  }catch(err){$("#loadmsg").innerHTML='<span class="err">Input verification failed: '+esc(err.message)+'</span>';return;}
+  if(!ixos.length){$("#loadmsg").innerHTML='<span class="err">No .ixo files found.</span>';return;}
+  window.__ixos=ixos;window.__inputs=inputs;LAST_EVIDENCE=null;
+  $("#loadmsg").innerHTML=`<span class="pill ok">${ixos.length} .ixo file(s) loaded</span> - ${inputs.length} source input(s) hashed. Press <b>Analyze</b>.`;
+}
+
+/* ---------- IXO decode ---------- */
+function propText(root,name){const e=root.querySelector('prop[name="'+name+'"]');return e&&e.textContent?e.textContent.trim():"";}
+function propValues(root,name){return [...root.querySelectorAll('prop[name="'+name+'"]')].map(e=>(e.textContent||"").trim()).filter(Boolean);}
+function base64ToBytes(b64){const bin=atob(b64);const u=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);return u;}
+function posToWell(pos,cols=12){return String.fromCharCode(65+Math.floor(pos/cols))+String(pos%cols+1).padStart(2,"0");}
+async function decodeAcq(raw){
+  const m=raw.match(/name="AcquisitionStore"[^>]*>([^<]+)</);if(!m)return {channels:null,error:"AcquisitionStore not found"};
+  const innerBytes=await inflate(base64ToBytes(m[1].trim()),"deflate");
+  const inner=new TextDecoder().decode(innerBytes),channels={};let cycle=null,channel=null;const re=/name="Cycle">(\d+)<\/prop>|name="Channel">(\d+)<\/prop>|name="FloPoints">([^<]+)</g;let mm;
+  while((mm=re.exec(inner))){
+    if(mm[1]!==undefined)cycle=parseInt(mm[1])+1;
+    else if(mm[2]!==undefined)channel=parseInt(mm[2]);
+    else{
+      if(cycle==null||channel==null)throw new Error("AcquisitionStore ordering is invalid");
+      const b=base64ToBytes(mm[3]),dv=new DataView(b.buffer,b.byteOffset,b.byteLength),a=new Float32Array(b.byteLength/4);
+      for(let i=0;i<a.length;i++)a[i]=dv.getFloat32(i*4,true);
+      (channels[channel]??={})[cycle]=a;
+    }
+  }
+  if(!Object.keys(channels).length)return {channels:null,error:"AcquisitionStore contained no curves"};
+  return {channels,error:null};
+}
+function acquisitionStats(channels){
+  if(!channels)return [];
+  return Object.keys(channels).map(key=>{
+    const cycles=Object.keys(channels[key]).map(Number).sort((a,b)=>a-b),lengths=[...new Set(cycles.map(c=>channels[key][c].length))];
+    const continuous=cycles.every((c,i)=>i===0||c===cycles[i-1]+1);
+    return {channel:Number(key),cycles:cycles.length,firstCycle:cycles[0],lastCycle:cycles.at(-1),wellCounts:lengths,continuous};
+  });
+}
+async function decodeIxo(source){
+  const raw=source.text,end=raw.indexOf("</objectstream>"),dom=new DOMParser().parseFromString(end>=0?raw.slice(0,end+15):raw,"application/xml");
+  if(dom.querySelector("parsererror"))throw new Error("XML parse error");
+  const meta={};
+  ["name","Created","StartTime","EndTime","LastModified","LastModifiedByName","InstrumentName","InstrumentVersion","InstrumentID","SWVersion","CreatedByName","AppliedTemplates","State","Id","PlateID"].forEach(k=>meta[k]=propText(dom,k));
+  if(!meta.AppliedTemplates){const it=dom.querySelector('list[name="AppliedTemplates"] item');if(it&&it.textContent)meta.AppliedTemplates=it.textContent.trim();}
+  const identities={};["Id","InstrumentID","PlateID","OwnerUID","UID","SubsetID"].forEach(k=>identities[k]=[...new Set(propValues(dom,k))]);
+  const names={};dom.querySelectorAll('[class="GenSampleEditName"]').forEach(o=>{const p=o.querySelector('prop[name="Position"]'),n=o.querySelector('prop[name="name"]');if(p&&n&&n.textContent&&!(p.textContent.trim() in names))names[parseInt(p.textContent)]=n.textContent.trim();});
+  const exs=[...dom.querySelectorAll('prop[name="ExcitationWL"]')].map(e=>parseInt(e.textContent)).filter(Number.isFinite),uniq=[...new Set(exs)].sort((a,b)=>a-b),ex2chan={};uniq.forEach((e,i)=>ex2chan[e]=i);
+  const fallback={465:0,533:1};
+  let acq={channels:null,error:null};try{acq=await decodeAcq(raw);}catch(err){acq={channels:null,error:err.message};}
+  const channels=acq.channels,cycles={};if(channels)for(const c in channels)cycles[c]=Object.keys(channels[c]).map(Number).sort((a,b)=>a-b);
+  const seen=new Set(),wells=[];let duplicates=0;
+  dom.querySelectorAll('[class*="Quantification Analysis"]').forEach(an=>{
+    const sn=an.querySelector('prop[name="SubsetName"]'),xwl=an.querySelector('prop[name="NumeratorXWL"]');if(!sn||!xwl)return;
+    const target=sn.textContent.trim(),wl=parseInt(xwl.textContent),chan=(wl in ex2chan)?ex2chan[wl]:(fallback[wl]??0);
+    an.querySelectorAll('[class="QuantSampleB"]').forEach(qsb=>{
+      const d={};qsb.querySelectorAll("prop").forEach(p=>d[p.getAttribute("name")]=(p.textContent||"").trim());
+      if(!("Pos" in d)||!("CrossingPoint" in d))return;
+      const pos=parseInt(d.Pos),key=target+"|"+pos;if(seen.has(key)){duplicates++;return;}seen.add(key);
+      const rawCq=Number(d.CrossingPoint),callCode=Number(d.Call??3),curve=(channels&&channels[chan]&&cycles[chan])?cycles[chan].map(c=>channels[chan][c][pos]):null;
+      wells.push({
+        well:posToWell(pos),pos,sample:names[pos]||"",target,channel:chan,
+        CpRaw:Number.isFinite(rawCq)?rawCq:null,Cp:Number.isFinite(rawCq)&&rawCq>0?rawCq:null,
+        callCode,call:CALL[callCode]??String(callCode),curve,
+        CpUncertain:d.CpUncertain??"",CpState:d.CpState??"",CrossingPointStatus:d.CrossingPointStatus??"",
+        IsIncluded:d.IsIncluded??"",CalcConc:d.CalcConc??"",ConcStatus:d.ConcStatus??""
+      });
+    });
+  });
+  const stats=acquisitionStats(channels),nCycles=stats.length?Math.max(...stats.map(s=>s.cycles)):null;
+  return {
+    file:source.name,sourcePath:source.path||source.name,sourceArchive:source.archive||null,zip:source.zip||null,
+    meta,wells,nCycles,acqStats:stats,acqError:acq.error,identities,duplicates,namedPositions:Object.keys(names).length,
+    format:{signature:dom.documentElement.getAttribute("signature")||"",version:dom.documentElement.getAttribute("version")||""}
+  };
+}
+
+/* ---------- thesis WoL and disclosed proxy ---------- */
+function fitLin(xs,ys){
+  const n=xs.length,mx=avg(xs),my=avg(ys);let sxx=0,sxy=0,syy=0;
+  for(let i=0;i<n;i++){sxx+=(xs[i]-mx)**2;sxy+=(xs[i]-mx)*(ys[i]-my);syy+=(ys[i]-my)**2;}
+  if(!sxx)return {slope:0,inter:my,r2:0};
+  const slope=sxy/sxx,inter=my-slope*mx;let ssr=0;for(let i=0;i<n;i++)ssr+=(ys[i]-(slope*xs[i]+inter))**2;
+  return {slope,inter,r2:syy>0?1-ssr/syy:0};
+}
+function effWol(curve){
+  if(!curve||curve.length<8)return null;
+  const F=curve.map(Number),n=F.length,cyc=[...Array(n)].map((_,i)=>i+1),fmin=Math.min(...F),fmax=Math.max(...F);
+  if(fmax-fmin<50)return null;
+  let best=null;const lo=fmin-0.02*(fmax-fmin),hi=fmin*0.999;
+  for(let k=0;k<12;k++){
+    const baseline=lo+(hi-lo)*k/11,y=F.map(v=>v-baseline);if(y.some(v=>v<=0))continue;
+    const ly=y.map(Math.log10),amp=Math.max(...y),idx=[];for(let i=0;i<y.length;i++)if(y[i]>=0.02*amp&&y[i]<=0.25*amp)idx.push(i);
+    if(idx.length<4)continue;const runs=[[idx[0]]];for(let i=1;i<idx.length;i++){if(idx[i]===idx[i-1]+1)runs.at(-1).push(idx[i]);else runs.push([idx[i]]);}
+    const run=runs.reduce((a,c)=>c.length>a.length?c:a);if(run.length<4)continue;
+    const f=fitLin(run.map(i=>cyc[i]),run.map(i=>ly[i]));if(f.slope<=0)continue;if(!best||f.r2>best.r2)best={...f,baseline,window:[run[0]+1,run.at(-1)+1]};
+  }
+  if(!best||best.r2<0.98)return null;const E=(10**best.slope-1)*100;
+  return E>30&&E<140?Math.round(E*10)/10:null;
+}
+function effSliwinProxy(curve){
+  if(!curve||curve.length<8)return null;
+  const F=curve.map(Number),n=F.length,cyc=[...Array(n)].map((_,i)=>i+1),fmin=Math.min(...F),fmax=Math.max(...F);
+  if(fmax-fmin<50)return null;
+  const y=F.map(v=>v-fmin+1),ly=y.map(Math.log10),amp=Math.max(...y);let best=null;const width=5;
+  for(let s=0;s+width<=n;s++){
+    const win=[...Array(width)].map((_,i)=>s+i);if(y[win[0]]<0.01*amp||y[win.at(-1)]>0.35*amp)continue;
+    const f=fitLin(win.map(i=>cyc[i]),win.map(i=>ly[i]));if(f.slope>0&&(!best||f.r2>best.r2))best=f;
+  }
+  if(!best||best.r2<0.99)return null;const E=(10**best.slope-1)*100;return E>30&&E<140?Math.round(E*10)/10:null;
+}
+
+/* ---------- QC and forensic audit ---------- */
+function classify(name,rules){
+  for(const r of rules){if(!r.pattern||!r.pattern.trim())continue;try{if(new RegExp(r.pattern,"i").test(name||""))return r.role;}catch(e){}}
+  return "Sample";
+}
+function splitRep(name,regex){
+  if(!regex)return {root:name,rep:""};let m;try{m=(name||"").match(new RegExp(regex,"i"));}catch(e){return {root:name,rep:""};}
+  if(!m)return {root:name,rep:""};return {root:(m[1]||name).trim(),rep:[m[2],m[3]].filter(Boolean).join("-")};
+}
+function storedAmplified(w){return w.call==="Positive"&&Number.isFinite(w.CpRaw)&&w.CpRaw>0;}
+function runQC(run,p){
+  const failures=[],missing=[],checks=[],compiled=p.qcRules.map((r,i)=>({...r,index:i,re:new RegExp(r.target,"i")}));
+  run.wells.forEach(w=>{w.qcChecks=[];w.qcStatus="N/A";});
+  for(const rule of compiled){
+    const matched=run.wells.filter(w=>w.role===rule.role&&rule.re.test(w.target));
+    if(rule.required&&!matched.length)missing.push({rule:rule.index+1,label:rule.label||rule.target,message:`Required control evidence missing: ${rule.role} / ${rule.label||rule.target}`});
+    for(const w of matched){
+      let pass,message;
+      if(rule.expectation==="amplify"){
+        pass=storedAmplified(w)&&w.CpRaw>=rule.min&&w.CpRaw<=rule.max;
+        message=pass?`stored Cq ${w.CpRaw.toFixed(2)} in [${rule.min}, ${rule.max}]`:`expected stored Cq in [${rule.min}, ${rule.max}], observed ${w.CpRaw>0?w.CpRaw.toFixed(2):"ND"} / ${w.call}`;
+      }else{
+        pass=w.call==="Negative"&&(w.CpRaw===0||w.CpRaw==null);
+        message=pass?"clean (stored Cq 0 / Negative)":`expected clean, observed ${w.CpRaw>0?w.CpRaw.toFixed(2):"ND"} / ${w.call}`;
+      }
+      const item={kind:"control",pass,rule:rule.index+1,label:rule.label||rule.target,well:w.well,sample:w.sample,role:w.role,target:w.target,message};
+      checks.push(item);w.qcChecks.push(item);if(!pass)failures.push(item);
+    }
+  }
+  for(const w of run.wells.filter(w=>w.role!=="Sample"&&!w.qcChecks.length)){
+    const item={kind:"unassessed",pass:false,well:w.well,sample:w.sample,role:w.role,target:w.target,message:"Control-classified well has no target-specific acceptance rule"};
+    failures.push(item);checks.push(item);w.qcChecks.push(item);
+  }
+  const groups=new Map();
+  for(const w of run.wells){const key=(w.root||w.sample||w.well)+"|"+w.target;if(!groups.has(key))groups.set(key,[]);groups.get(key).push(w);}
+  const replicateChecks=[];
+  for(const ws of groups.values()){
+    if(ws.length<2)continue;
+    const positive=ws.filter(storedAmplified),negative=ws.filter(w=>w.call==="Negative"&&(w.CpRaw===0||w.CpRaw==null));let pass=true,message="";
+    if(positive.length===ws.length){
+      const cq=positive.map(w=>w.CpRaw),spread=Math.max(...cq)-Math.min(...cq);pass=spread<=p.maxReplicateSpread;message=`replicate spread ${spread.toFixed(3)} cycles (limit ${p.maxReplicateSpread})`;
+    }else if(negative.length===ws.length){message="replicates consistently non-detected";}
+    else{pass=false;message="discordant replicate calls / stored Cq";}
+    const item={kind:"replicate",pass,sample:ws[0].root||ws[0].sample,target:ws[0].target,wells:ws.map(w=>w.well).join(" "),message};
+    replicateChecks.push(item);checks.push(item);if(!pass)failures.push(item);
+    for(const w of ws){w.qcChecks.push(item);}
+  }
+  for(const w of run.wells){if(w.qcChecks.some(x=>!x.pass))w.qcStatus="FAIL";else if(w.qcChecks.length)w.qcStatus="PASS";}
+  const pass=checks.length>0&&failures.length===0&&missing.length===0;
+  return {pass,checks,failures,missing,replicateChecks,nPassed:checks.filter(x=>x.pass).length,nChecks:checks.length};
+}
+function parseWallDate(s){
+  if(!s||s.startsWith("1899"))return null;
+  const m=String(s).match(/^(\d{4})-(\d\d)-(\d\d)T(\d\d):(\d\d):(\d\d)(?:\.(\d+))?$/);
+  if(m)return new Date(Date.UTC(+m[1],+m[2]-1,+m[3],+m[4],+m[5],+m[6],+((m[7]||"0").padEnd(3,"0").slice(0,3))));
+  const d=new Date(s);return isNaN(d)?null:d;
+}
+function sameWallDay(a,b){return a.toISOString().slice(0,10)===b.toISOString().slice(0,10);}
+function tfmt(d){return d?d.toISOString().replace("T"," ").slice(0,19):"";}
+function forensicEvents(run){
+  const m=run.meta,created=parseWallDate(m.Created),start=parseWallDate(m.StartTime),end=parseWallDate(m.EndTime),modified=parseWallDate(m.LastModified),events=[],flags=[];
+  let overall="Normal";
+  const addFlag=(severity,message)=>{flags.push({severity,message});if(severity==="bad")overall="Suspicious";else if(severity==="warn"&&overall==="Normal")overall="Review";};
+  if(created)events.push({t:created,sev:"info",msg:`Experiment created by ${m.CreatedByName||"?"}`});else addFlag("warn","Creation timestamp missing");
+  if(start)events.push({t:start,sev:"info",msg:`Run started on ${m.InstrumentName||"instrument"} (SW ${m.SWVersion||"?"})`});else addFlag("warn","Start timestamp missing");
+  if(end){
+    const duration=start?(end-start)/60000:null;events.push({t:end,sev:"info",msg:`Run ended${duration!=null?`, duration ${duration.toFixed(0)} min`:""}`});
+    if(duration!=null&&(duration<20||duration>300))addFlag("warn",`Unusual run duration: ${duration.toFixed(0)} min`);
+  }else addFlag("bad","Run end timestamp missing");
+  if(created&&start&&created>start)addFlag("warn","Creation timestamp is after run start");
+  if(start&&end&&start>end)addFlag("bad","Run end precedes run start");
+  if(modified){
+    let sev="ok",msg=`File saved by ${m.LastModifiedByName||m.CreatedByName||"?"}`;
+    if(end){
+      const hours=(modified-end)/3.6e6;
+      if(hours<0){sev="bad";msg=`Last-modified timestamp precedes run end by ${Math.abs(hours*60).toFixed(0)} min`;addFlag("bad",msg);}
+      else if(hours<=0.5)msg=`File saved ${(hours*60).toFixed(0)} min after run end`;
+      else if(sameWallDay(end,modified)){sev="warn";msg=`File edited ${hours.toFixed(1)} h after run end`;addFlag("warn",msg);}
+      else{sev="bad";msg=`File edited ${(hours/24).toFixed(1)} d after run end`;addFlag("bad",msg);}
+    }
+    events.push({t:modified,sev,msg});
+  }else addFlag("warn","Last-modified timestamp missing");
+  if(m.LastModifiedByName&&m.CreatedByName&&m.LastModifiedByName!==m.CreatedByName)addFlag("warn",`Operator changed: created by ${m.CreatedByName}, modified by ${m.LastModifiedByName}`);
+  if(m.State&&m.State!=="3")addFlag("warn",`Experiment state is ${m.State}, not completed state 3`);
+  if(run.format.signature!=="IXOS")addFlag("bad",`Unexpected IXO signature: ${run.format.signature||"missing"}`);
+  if(run.zip&&!run.zip.crcVerified)addFlag("bad","ZIP CRC-32 was not verified");
+  if(run.acqError)addFlag("bad",`Raw acquisition decode issue: ${run.acqError}`);
+  if(!run.acqStats.length)addFlag("bad","No decoded raw fluorescence channels");
+  for(const s of run.acqStats){
+    if(!s.continuous)addFlag("bad",`Channel ${s.channel} cycle numbers are not continuous`);
+    if(s.wellCounts.length!==1)addFlag("bad",`Channel ${s.channel} has inconsistent fluorescence vector lengths`);
+  }
+  if(run.duplicates)addFlag("warn",`${run.duplicates} duplicate target-position results were ignored`);
+  const uncertain=run.wells.filter(w=>String(w.CpUncertain)!=="0"),nonDefaultState=run.wells.filter(w=>w.CpState&&String(w.CpState)!=="1"),status=run.wells.filter(w=>w.CrossingPointStatus&&String(w.CrossingPointStatus)!=="0");
+  const excluded=run.wells.filter(w=>String(w.IsIncluded)==="0"||String(w.IsIncluded).toLowerCase()==="false");
+  const inconsistent=run.wells.filter(w=>(w.call==="Positive"&&!(w.CpRaw>0))||(w.call==="Negative"&&w.CpRaw>0));
+  if(uncertain.length)addFlag("warn",`${uncertain.length} result(s) have CpUncertain set`);
+  if(nonDefaultState.length)addFlag("warn",`${nonDefaultState.length} result(s) have non-default CpState`);
+  if(status.length)addFlag("warn",`${status.length} result(s) have non-zero CrossingPointStatus`);
+  if(excluded.length)addFlag("warn",`${excluded.length} result(s) are excluded`);
+  if(inconsistent.length)addFlag("bad",`${inconsistent.length} stored Call/CrossingPoint inconsistencies`);
+  if(run.wells.some(w=>!w.curve))addFlag("warn",`${run.wells.filter(w=>!w.curve).length} result row(s) lack a decoded curve`);
+  events.sort((a,b)=>a.t-b.t);
+  const targets=[...new Set(run.wells.map(w=>w.target))],facts=[
+    `Targets: ${targets.join(", ")||"none"}; ${run.nCycles||"?"} cycles; ${run.wells.length} stored result rows`,
+    `Calls: Positive ${run.wells.filter(w=>w.call==="Positive").length}; Negative ${run.wells.filter(w=>w.call==="Negative").length}; Uncertain ${run.wells.filter(w=>w.call==="Uncertain").length}; NotCalculated ${run.wells.filter(w=>w.call==="NotCalculated").length}`,
+    `Result flags: CpUncertain ${uncertain.length}; non-default CpState ${nonDefaultState.length}; excluded ${excluded.length}; call/Cq inconsistencies ${inconsistent.length}`,
+    `IXO signature ${run.format.signature||"missing"} v${run.format.version||"?"}; named plate positions ${run.namedPositions}; decoded channels ${run.acqStats.length}`
+  ];
+  return {events,facts,flags,overall,evidence:{uncertain:uncertain.length,nonDefaultState:nonDefaultState.length,status:status.length,excluded:excluded.length,inconsistent:inconsistent.length}};
+}
+
+/* ---------- analysis ---------- */
+$("#analyze").onclick=async()=>{
+  $("#proferr").textContent="";
+  if(!window.__ixos?.length){$("#proferr").textContent="Load .ixo files first.";return;}
+  const p=readForm(),errors=validateProfile(p);
+  if(errors.length){$("#proferr").innerHTML=errors.map(esc).join("<br>");return;}
+  if(!("DecompressionStream" in window)){$("#proferr").textContent="This browser lacks DecompressionStream, required for verified curve decoding.";return;}
+  PROFILE_USED=p;LAST_EVIDENCE=null;RUNS=[];$("#analyze").disabled=true;$("#analyze").textContent="Analyzing...";
+  try{
+    for(const source of window.__ixos){
+      let run;try{run=await decodeIxo(source);}catch(err){RUNS.push({file:source.name,error:err.message,checksum:sha256hex(source.bytes),size:source.bytes.length,sourceArchive:source.archive||null,zip:source.zip||null,sourceBytes:source.bytes});continue;}
+      run.checksum=sha256hex(source.bytes);run.size=source.bytes.length;run.sourceBytes=source.bytes;
+      for(const w of run.wells){
+        w.role=classify(w.sample,p.controlRules);const rep=splitRep(w.sample,p.replicate.regex);w.root=rep.root;w.rep=rep.rep;
+        w.effWol=(p.models.wol&&w.call==="Positive")?effWol(w.curve):null;w.effSli=(p.models.sliwinProxy&&w.call==="Positive")?effSliwinProxy(w.curve):null;
+      }
+      run.qc=runQC(run,p);run.forensic=forensicEvents(run);RUNS.push(run);
+    }
+    render(p);
+  }catch(err){$("#proferr").textContent="Analysis failed: "+err.message;}
+  finally{$("#analyze").disabled=false;$("#analyze").textContent="Analyze";}
+};
+
+/* ---------- chart and interactive rendering ---------- */
+function drawChart(canvas,run,target,logY){
+  const g=canvas.getContext("2d");g.clearRect(0,0,canvas.width,canvas.height);g.fillStyle="#fff";g.fillRect(0,0,canvas.width,canvas.height);
+  if(!run||run.error){g.fillStyle="#888";g.font="12px sans-serif";g.fillText("No decoded run selected",16,24);return;}
+  const wells=run.wells.filter(w=>w.target===target&&w.curve);if(!wells.length){g.fillStyle="#888";g.font="12px sans-serif";g.fillText("No decoded curves for "+target,16,24);return;}
+  const n=wells[0].curve.length,values=wells.flatMap(w=>w.curve),ymin=Math.min(...values),ymax=Math.max(...values);
+  const transform=v=>logY?Math.log10(Math.max(v-ymin+1,1)):v,tymin=logY?0:ymin,tymax=logY?Math.log10(ymax-ymin+1):ymax;
+  const padL=52,padB=26,padT=18,padR=10,W=canvas.width,H=canvas.height,X=c=>padL+(c-1)/(n-1)*(W-padL-padR),Y=v=>H-padB-(transform(v)-tymin)/((tymax-tymin)||1)*(H-padT-padB);
+  g.strokeStyle="#e2e6ea";g.fillStyle="#67707c";g.font="10px sans-serif";g.lineWidth=1;
+  for(let k=0;k<=4;k++){const yy=padT+k/4*(H-padT-padB);g.beginPath();g.moveTo(padL,yy);g.lineTo(W-padR,yy);g.stroke();}
+  for(let c=1;c<=n;c+=Math.ceil(n/10))g.fillText(String(c),X(c)-4,H-9);
+  const colors={Positive:"#1b7837",Negative:"#b8c2cf",Uncertain:"#d97706",NotCalculated:"#c0392b"};
+  wells.forEach(w=>{g.strokeStyle=colors[w.call]||"#555";g.lineWidth=w.call==="Positive"?1.5:1;g.globalAlpha=w.call==="Positive"?.95:.5;g.beginPath();w.curve.forEach((v,i)=>{const x=X(i+1),y=Y(v);i?g.lineTo(x,y):g.moveTo(x,y);});g.stroke();});
+  g.globalAlpha=1;g.fillStyle="#1e2732";g.font="11px sans-serif";g.fillText(`${target} - ${wells.length} wells (green = stored Positive call)${logY?" [log]":""}`,padL,13);
+}
+function render(p){
+  $("#results").style.display="block";
+  const ok=RUNS.filter(r=>!r.error),nW=ok.reduce((a,r)=>a+r.wells.length,0),nPass=ok.filter(r=>r.qc.pass).length;
+  const methods=[p.models.wol?"Thesis WoL":null,p.models.sliwinProxy?"sliwin-style proxy":null].filter(Boolean).join(" + ");
+  $("#summary").innerHTML=`<b>${ok.length}</b> run(s) - <b>${nW}</b> stored result rows - QC pass <span class="pill ${nPass===ok.length&&ok.length?'ok':'warn'}">${nPass}/${ok.length}</span> - stored Cq only - efficiency <b>${esc(methods||"none")}</b> - profile <b>${esc(p.profileName||"(unnamed)")}</b>`+(RUNS.some(r=>r.error)?` - <span class="pill bad">${RUNS.filter(r=>r.error).length} failed</span>`:"");
+  const cards=$("#runs");cards.innerHTML="";
+  RUNS.forEach((r,index)=>{
+    const card=ce("div");card.className="runcard";
+    if(r.error){card.innerHTML=`<div class="runhead"><b>${esc(r.file)}</b><span class="pill bad">decode error: ${esc(r.error)}</span></div><div class="mono">SHA-256 ${r.checksum}</div>`;cards.appendChild(card);return;}
+    const q=r.qc,f=r.forensic,forClass={Normal:"ok",Review:"warn",Suspicious:"bad"}[f.overall]||"neu",targets=[...new Set(r.wells.map(w=>w.target))];
+    const qcProblems=[...q.missing,...q.failures];
+    card.innerHTML=`<div class="runhead"><div><b>${esc(r.meta.name||r.file)}</b> <span class="tag">${esc(r.meta.AppliedTemplates||"")}</span></div><div>Forensic <span class="pill ${forClass}">${f.overall}</span> &nbsp; QC ${q.pass?'<span class="pill ok">PASS</span>':'<span class="pill bad">CHECK</span>'}</div></div>
+      <div class="kv" style="margin:6px 0">source <b>${esc(r.file)}</b> - instrument <b>${esc(r.meta.InstrumentName)}</b> - SW <b>${esc(r.meta.SWVersion)}</b> - operator <b>${esc(r.meta.CreatedByName)}</b> - targets <b>${esc(targets.join(", "))}</b> - rows <b>${r.wells.length}</b></div>
+      <div class="mono">IXO SHA-256 ${r.checksum} - ${r.size.toLocaleString()} bytes${r.sourceArchive?` - archive ${esc(r.sourceArchive.name)} SHA-256 ${r.sourceArchive.checksum}`:""}${r.zip?` - ZIP CRC-32 ${r.zip.crc32} verified`:""}</div>
+      <div class="kv" style="margin-top:5px">Target-specific checks: <b>${q.nPassed}/${q.nChecks} passed</b> - missing required evidence <b>${q.missing.length}</b> - replicate failures <b>${q.replicateChecks.filter(x=>!x.pass).length}</b></div>
+      <div class="evlog">${f.events.map(e=>`<div><span class="pill ${e.sev==='ok'?'ok':e.sev==='warn'?'warn':e.sev==='bad'?'bad':'info'}">${tfmt(e.t)}</span> ${esc(e.msg)}</div>`).join("")}${f.facts.map(x=>`<div class="muted">- ${esc(x)}</div>`).join("")}${f.flags.map(x=>`<div><span class="pill ${x.severity==='bad'?'bad':'warn'}">${x.severity==='bad'?'evidence alert':'review'}</span> ${esc(x.message)}</div>`).join("")}</div>
+      <details><summary>QC evidence and exceptions (${qcProblems.length})</summary><div class="evlog">${q.missing.map(x=>`<div><span class="pill bad">missing</span> ${esc(x.message)}</div>`).join("")}${q.failures.map(x=>`<div><span class="pill bad">fail</span> ${esc(x.sample||"")} ${esc(x.target||"")} ${esc(x.message)}</div>`).join("")}${q.checks.filter(x=>x.pass).map(x=>`<div><span class="pill ok">pass</span> ${esc(x.sample||"")} ${esc(x.target||"")} ${esc(x.message)}</div>`).join("")}</div></details>
+      <div style="margin-top:8px"><a class="dl" data-rdes="${index}">Download RDES with stored Cq</a><a class="dl" data-rdml="${index}">Download RDML for exact LinRegPCR</a></div>`;
+    cards.appendChild(card);
+  });
+  cards.querySelectorAll("[data-rdes]").forEach(a=>a.onclick=()=>downloadRDES(RUNS[+a.dataset.rdes]));
+  cards.querySelectorAll("[data-rdml]").forEach(a=>a.onclick=()=>downloadRDML(RUNS[+a.dataset.rdml]));
+  const runSel=$("#curveRun");runSel.innerHTML="";ok.forEach(r=>runSel.appendChild(option(String(RUNS.indexOf(r)),r.meta.name||r.file,false)));
+  runSel.onchange=fillTargets;$("#curveTgt").onchange=drawInteractive;$("#logY").onchange=drawInteractive;
+  if(ok.length)fillTargets();else drawChart($("#plot"),null,"",false);
+  const cols=["file","well","sample","root","rep","role","target","stored Cq","call","QC","WoL%","sliwin proxy%","CpUncertain","CpState","Included"],rows=[];
+  ok.forEach(r=>r.wells.forEach(w=>rows.push({
+    file:r.meta.name||r.file,well:w.well,sample:w.sample,root:w.root,rep:w.rep,role:w.role,target:w.target,
+    "stored Cq":w.CpRaw>0?w.CpRaw.toFixed(2):"ND (0)",call:w.call,QC:w.qcStatus,"WoL%":w.effWol??"","sliwin proxy%":w.effSli??"",
+    CpUncertain:w.CpUncertain,CpState:w.CpState,Included:w.IsIncluded
+  })));
+  $("#wellcount").textContent=`(${rows.length} rows)`;const table=$("#welltable");
+  table.innerHTML="<tr>"+cols.map(c=>`<th>${esc(c)}</th>`).join("")+"</tr>"+rows.map(row=>"<tr>"+cols.map(c=>{let v=esc(row[c]);if(c==="role"&&row.role!=="Sample")v=`<span class="tag">${v}</span>`;if(c==="call")v=`<span class="pill ${row.call==='Positive'?'ok':row.call==='Negative'?'neu':'warn'}">${v}</span>`;if(c==="QC")v=`<span class="pill ${row.QC==='PASS'?'ok':row.QC==='FAIL'?'bad':'neu'}">${v}</span>`;return `<td>${v}</td>`;}).join("")+"</tr>").join("");
+}
+function fillTargets(){
+  const run=RUNS[Number($("#curveRun").value)],sel=$("#curveTgt");sel.innerHTML="";
+  if(!run||run.error){drawChart($("#plot"),null,"",false);return;}
+  [...new Set(run.wells.map(w=>w.target))].forEach(t=>sel.appendChild(option(t,t,false)));drawInteractive();
+}
+function drawInteractive(){drawChart($("#plot"),RUNS[Number($("#curveRun").value)],$("#curveTgt").value,$("#logY").checked);}
+
+/* ---------- open exports ---------- */
+function csv(v){v=v==null?"":String(v);return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;}
+function resultsCSV(){
+  const cols=["source_file","experiment","ixo_sha256","archive","archive_sha256","well","sample","root","replicate","role","target","channel","stored_Cq","call","qc_status","WoL_eff_pct","sliwin_proxy_eff_pct","CpUncertain","CpState","CrossingPointStatus","IsIncluded","CalcConc","ConcStatus","forensic","instrument","sw_version","operator"];
+  const lines=[cols.join(",")];
+  RUNS.filter(r=>!r.error).forEach(r=>r.wells.forEach(w=>lines.push([
+    r.file,r.meta.name,r.checksum,r.sourceArchive?.name||"",r.sourceArchive?.checksum||"",w.well,w.sample,w.root,w.rep,w.role,w.target,w.channel,w.CpRaw??"",w.call,w.qcStatus,w.effWol??"",w.effSli??"",w.CpUncertain,w.CpState,w.CrossingPointStatus,w.IsIncluded,w.CalcConc,w.ConcStatus,r.forensic.overall,r.meta.InstrumentName,r.meta.SWVersion,r.meta.CreatedByName
+  ].map(csv).join(","))));
+  return lines.join("\n")+"\n";
+}
+function qcCSV(){
+  const cols=["source_file","experiment","ixo_sha256","archive","archive_sha256","zip_crc32","created","start","end","last_modified","forensic","state","qc_pass","checks_passed","checks_total","missing_required","qc_failures","replicate_failures","CpUncertain_count","nondefault_CpState_count","excluded_count","call_Cq_inconsistencies","n_rows","targets"];
+  const lines=[cols.join(",")];
+  RUNS.forEach(r=>{
+    if(r.error){lines.push([r.file,"",r.checksum,r.sourceArchive?.name||"",r.sourceArchive?.checksum||"",r.zip?.crc32||"","","","","","decode error","","false","","","","","","","","","",0,""].map(csv).join(","));return;}
+    const q=r.qc,m=r.meta,e=r.forensic.evidence;
+    lines.push([r.file,m.name,r.checksum,r.sourceArchive?.name||"",r.sourceArchive?.checksum||"",r.zip?.crc32||"",m.Created,m.StartTime,m.EndTime,m.LastModified,r.forensic.overall,m.State,q.pass,q.nPassed,q.nChecks,q.missing.length,q.failures.length,q.replicateChecks.filter(x=>!x.pass).length,e.uncertain,e.nonDefaultState,e.excluded,e.inconsistent,r.wells.length,[...new Set(r.wells.map(w=>w.target))].join(" ")].map(csv).join(","));
+  });
+  return lines.join("\n")+"\n";
+}
+function makeRDES(run){
+  const curves=run.wells.filter(w=>w.curve),n=curves.length?Math.max(...curves.map(w=>w.curve.length)):0;
+  const head=["Well","Sample","Sample Type","Target","Target Type","Dye","Cq"];for(let c=1;c<=n;c++)head.push(String(c));
+  const lines=[head.join("\t")];
+  for(const w of run.wells){
+    const row=[w.well,w.sample||"",sampleType(w.role),w.target,"toi","channel"+(w.channel+1),w.CpRaw??""];
+    for(let c=0;c<n;c++)row.push(w.curve?.[c]!=null?Number(w.curve[c]).toFixed(4):"");lines.push(row.join("\t"));
+  }
+  return lines.join("\n")+"\n";
+}
+function sampleType(role){return role==="NTC"?"ntc":role==="Positive/CRM"?"pos":role==="Negative"?"nac":"unkn";}
+function makeBaselineCSV(run){
+  const curves=run.wells.filter(w=>w.curve),n=curves.length?Math.max(...curves.map(w=>w.curve.length)):0;
+  const head=["Well","Sample","Target","Stored_Cq"];for(let c=1;c<=n;c++)head.push("Cycle_"+c);
+  const lines=[head.map(csv).join(",")];
+  for(const w of curves){const min=Math.min(...w.curve),row=[w.well,w.sample,w.target,w.CpRaw??""];for(const v of w.curve)row.push((v-min+1).toFixed(4));lines.push(row.map(csv).join(","));}
+  return lines.join("\n")+"\n";
+}
+function rdmlId(prefix,value){
+  let s=String(value||"unknown").replace(/[^\w.-]+/g,"_");if(!/^[A-Za-z_]/.test(s))s="_"+s;return prefix+"_"+s;
+}
+function makeRDMLXML(run){
+  const wells=run.wells.filter(w=>w.curve),samples=[...new Set(wells.map(w=>w.sample||"Unnamed"))],targets=[...new Set(wells.map(w=>w.target))],byPos=new Map();
+  for(const w of wells){if(!byPos.has(w.pos))byPos.set(w.pos,[]);byPos.get(w.pos).push(w);}
+  let xml='<?xml version="1.0" encoding="UTF-8"?>\n<rdml xmlns="http://www.rdml.org" version="1.4">\n<dye id="dye1"/>\n';
+  for(const s of samples){const role=wells.find(w=>(w.sample||"Unnamed")===s)?.role||"Sample";xml+=`<sample id="${xesc(rdmlId("sample",s))}"><type>${sampleType(role)}</type></sample>\n`;}
+  for(const t of targets)xml+=`<target id="${xesc(rdmlId("target",t))}"><type>toi</type><dyeId id="dye1"/></target>\n`;
+  xml+=`<experiment id="exp1"><run id="${xesc(rdmlId("run",run.meta.name||run.file))}"><pcrFormat><rows>8</rows><columns>12</columns><rowLabel>ABC</rowLabel><columnLabel>123</columnLabel></pcrFormat>\n`;
+  for(const [pos,items] of [...byPos.entries()].sort((a,b)=>a[0]-b[0])){
+    const sample=items[0].sample||"Unnamed";xml+=`<react id="${pos+1}"><sample id="${xesc(rdmlId("sample",sample))}"/>`;
+    for(const w of items){
+      xml+=`<data><tar id="${xesc(rdmlId("target",w.target))}"/>`;
+      if(w.CpRaw>0)xml+=`<cq>${w.CpRaw}</cq>`;
+      w.curve.forEach((v,i)=>{xml+=`<adp><cyc>${i+1}</cyc><fluor>${Number(v).toFixed(4)}</fluor></adp>`;});
+      xml+="</data>";
+    }
+    xml+="</react>\n";
+  }
+  return xml+"</run></experiment></rdml>\n";
+}
+function makeRDML(run){return makeStoredZip([{name:"rdml_data.xml",data:makeRDMLXML(run)}]);}
+function qpcRScript(){
+  return `# Thesis-aligned qpcR l4 + sliwin workflow.\n# Usage: Rscript qpcR_compare.R baseline_subtracted_curves.csv results.csv\nsuppressPackageStartupMessages(library(qpcR))\nargs <- commandArgs(trailingOnly=TRUE)\nif (length(args) < 2) stop("Usage: Rscript qpcR_compare.R input.csv output.csv")\nd <- read.csv(args[1], check.names=FALSE)\ncyc_cols <- grep("^Cycle_[0-9]+$", names(d), value=TRUE)\nsafe <- function(x) if (is.null(x) || length(x)==0) NA_real_ else as.numeric(x[1])\nout <- data.frame()\nfor (i in seq_len(nrow(d))) {\n  curve <- as.numeric(d[i, cyc_cols])\n  dat <- data.frame(Cycles=seq_along(curve), Fluo=curve)\n  fit <- tryCatch(pcrfit(dat, cyc=1, fluo=2, model=l4), error=function(e) NULL)\n  if (is.null(fit)) {\n    row <- data.frame(Well=d$Well[i], Sample=d$Sample[i], Target=d$Target[i], Stored_Cq=d$Stored_Cq[i], qpcR_cpD2=NA_real_, qpcR_eff_cpD2=NA_real_, qpcR_eff_sliwin=NA_real_)\n  } else {\n    ef <- tryCatch(efficiency(fit, plot=FALSE), error=function(e) NULL)\n    sw <- tryCatch(sliwin(fit, plot=FALSE), error=function(e) NULL)\n    row <- data.frame(Well=d$Well[i], Sample=d$Sample[i], Target=d$Target[i], Stored_Cq=d$Stored_Cq[i], qpcR_cpD2=safe(ef$cpD2), qpcR_eff_cpD2=safe(ef$eff), qpcR_eff_sliwin=safe(sw$eff))\n  }\n  out <- rbind(out,row)\n}\nwrite.csv(out,args[2],row.names=FALSE)\n`;
+}
+function referenceReadme(){
+  return `REFERENCE METHOD WORKFLOW\n\nBrowser values\n- Stored Cq is read directly from QuantSampleB.CrossingPoint. No Cq is estimated.\n- WoL is the original thesis estimator (Equation XII.1 / Appendix C.3).\n- The optional sliwin-style browser value is explicitly a proxy, not qpcR.\n\nExact LinRegPCR with the supplied local RDML-Python source\n1. Extract this evidence bundle.\n2. For each reference/*.rdml file run:\n   python rdml.py -lrp input.rdml --pcrEfficiencyExl 0.05 --excludeEfficiency "mean" --saveResults results.tsv\n3. The local source provided with the project is rdmlpython-main/rdmlpython-main/rdml.py.\n4. The supplied desktop reference is linregpcr/linregpcr/LinRegPCR.exe.\n\nExact qpcR comparison\n1. Install/load the qpcR R package.\n2. Run:\n   Rscript qpcR_compare.R baseline_subtracted_curves.csv qpcR_results.csv\n3. The script uses pcrfit(..., model=l4), efficiency(), and sliwin(), matching thesis Appendix C.5.\n\nIntegrity\n- Verify SHA-256 values against manifest.json before analysis.\n- ZIP CRC-32 validation is recorded for every IXO entry loaded from an archive.\n- The saved/printed PDF is signature-ready but is not a qualified electronic signature by itself.\n`;
+}
+function downloadRDES(run){if(!run.wells.some(w=>w.curve)){alert("No decoded curves available.");return;}dlText(safeName(run.meta.name||run.file)+"_RDES.tsv",makeRDES(run),"text/tab-separated-values");}
+function downloadRDML(run){if(!run.wells.some(w=>w.curve)){alert("No decoded curves available.");return;}dlBlob(safeName(run.meta.name||run.file)+".rdml",new Blob([makeRDML(run)],{type:"application/zip"}));}
+$("#dlResults").onclick=()=>dlText("ixo_results.csv",resultsCSV(),"text/csv");
+$("#dlQC").onclick=()=>dlText("ixo_qc_forensic.csv",qcCSV(),"text/csv");
+
+/* ---------- evidence bundle and report ---------- */
+function dataUrlBytes(url){const b64=url.split(",")[1],bin=atob(b64),out=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)out[i]=bin.charCodeAt(i);return out;}
+function generatedTimes(date){return {local:new Intl.DateTimeFormat("en-GB",{dateStyle:"medium",timeStyle:"long",hour12:false}).format(date),utc:date.toISOString(),timezone:Intl.DateTimeFormat().resolvedOptions().timeZone};}
+async function prepareEvidence(){
+  if(LAST_EVIDENCE)return LAST_EVIDENCE;
+  const generatedAt=new Date(),generated=generatedTimes(generatedAt),entries=[],graphs=[];
+  const add=(name,data,type,category)=>{const bytes=bytesFrom(data),item={name,data:bytes,type,category,size:bytes.length,sha256:sha256hex(bytes)};entries.push(item);return item;};
+  add("data/ixo_results.csv",resultsCSV(),"text/csv","data");
+  add("data/ixo_qc_forensic.csv",qcCSV(),"text/csv","data");
+  add("reference/qpcR_compare.R",qpcRScript(),"text/plain","reference");
+  add("reference/README.txt",referenceReadme(),"text/plain","reference");
+  for(const input of window.__inputs||[])add("inputs/source/"+safeName(input.name),input.bytes,"application/octet-stream","source");
+  for(const run of RUNS){
+    if(run.error)continue;
+    add("inputs/decoded/"+safeName(run.file),run.sourceBytes,"application/octet-stream","decoded-ixo");
+    add("reference/"+safeName(run.meta.name||run.file)+"_RDES.tsv",makeRDES(run),"text/tab-separated-values","reference");
+    add("reference/"+safeName(run.meta.name||run.file)+"_baseline_subtracted_curves.csv",makeBaselineCSV(run),"text/csv","reference");
+    add("reference/"+safeName(run.meta.name||run.file)+".rdml",makeRDML(run),"application/zip","reference");
+    for(const target of [...new Set(run.wells.map(w=>w.target))]){
+      const canvas=ce("canvas");canvas.width=1100;canvas.height=330;drawChart(canvas,run,target,false);
+      const dataUrl=canvas.toDataURL("image/png"),item=add("graphs/"+safeName(run.meta.name||run.file)+"__"+safeName(target)+".png",dataUrlBytes(dataUrl),"image/png","graph");
+      graphs.push({...item,dataUrl,run:run.file,target});
+    }
+  }
+  const payload={
+    schema:"lc480-ixo-evidence-manifest-v1",
+    tool:"LC480 .ixo Analyzer offline thesis-aligned",
+    generated,
+    profile:PROFILE_USED,
+    sourceInputs:(window.__inputs||[]).map(x=>({name:x.name,kind:x.kind,size:x.size,sha256:x.checksum})),
+    runs:RUNS.map(r=>r.error?{file:r.file,error:r.error,size:r.size,sha256:r.checksum}:{
+      file:r.file,experiment:r.meta.name,size:r.size,sha256:r.checksum,archive:r.sourceArchive,zip:r.zip,
+      format:r.format,metadata:r.meta,identifiers:r.identities,acquisition:r.acqStats,
+      qc:{pass:r.qc.pass,checksPassed:r.qc.nPassed,checksTotal:r.qc.nChecks,missing:r.qc.missing,failures:r.qc.failures},
+      forensic:{overall:r.forensic.overall,flags:r.forensic.flags,evidence:r.forensic.evidence}
+    }),
+    artifacts:entries.map(x=>({path:x.name,type:x.type,category:x.category,size:x.size,sha256:x.sha256})),
+    statement:"Stored Cq values are copied from IXO CrossingPoint. No Cq is estimated. The PDF printout is signature-ready but not a qualified electronic signature by itself."
+  };
+  const payloadJson=JSON.stringify(payload,null,2),payloadSha256=sha256hex(payloadJson);
+  const reportHtml=buildReportHTML({generated,payloadSha256,graphs,payload});
+  const standaloneReport=`<!doctype html><html><head><meta charset="utf-8"><title>IXO evidence report</title><style>${reportStandaloneCSS()}</style></head><body>${reportHtml}</body></html>`;
+  const reportHtmlSha256=sha256hex(standaloneReport);
+  const manifest={manifestPayloadSha256:payloadSha256,reportHtmlSha256,payload};
+  add("report/report.html",standaloneReport,"text/html","report");
+  add("manifest.json",JSON.stringify(manifest,null,2),"application/json","manifest");
+  add("README.txt",referenceReadme()+`\nManifest payload SHA-256: ${payloadSha256}\nReport HTML SHA-256: ${reportHtmlSha256}\n`,"text/plain","readme");
+  LAST_EVIDENCE={generated,payload,payloadSha256,reportHtmlSha256,reportHtml,graphs,entries};
+  return LAST_EVIDENCE;
+}
+function reportStandaloneCSS(){
+  return `@page{size:A4 landscape;margin:9mm}body{font-family:Arial,sans-serif;color:#111;font-size:11px}.rpt{max-width:930px;margin:auto}.rpt h1{font-size:18px}.rpt h2{font-size:14px;border-bottom:1px solid #999}.rpt h3{font-size:12px}table{width:100%;border-collapse:collapse;font-size:9.5px}th,td{border:1px solid #cfd6de;padding:3px;vertical-align:top;overflow-wrap:anywhere}.rmono{font-family:monospace;font-size:8.5px;word-break:break-all}img{max-width:100%;border:1px solid #ddd}.runsec{page-break-before:always}.signature{display:grid;grid-template-columns:1fr 1fr;gap:14px}.sigbox{border:1px solid #777;min-height:105px;padding:8px}.sigline{border-bottom:1px solid #555;height:28px}.small{font-size:8.5px;color:#555}.sev-Normal{color:#1b7837}.sev-Review{color:#b46900}.sev-Suspicious{color:#c0392b}@media print{body{margin:0}.rpt{max-width:none}.rpt h1,.rpt h2,.rpt h3{break-after:avoid}tr,img{break-inside:avoid}}`;
+}
+function buildReportHTML(evidence){
+  const {generated,payloadSha256,graphs,payload}=evidence,p=PROFILE_USED,ok=RUNS.filter(r=>!r.error);
+  let h=`<div class="rpt"><h1>LightCycler 480 .ixo Evidence and Forensic Analysis Report</h1>
+    <div>Issued automatically: <b>${esc(generated.local)}</b> (${esc(generated.timezone)}) - UTC ${esc(generated.utc)}</div>
+    <div>Evidence manifest payload SHA-256: <span class="rmono">${payloadSha256}</span></div>
+    <div>Profile: <b>${esc(p.profileName||"(unnamed)")}</b> - Runs decoded: <b>${ok.length}</b> - Stored Cq only; no Cq estimation.</div>
+    <div class="signature">
+      <div class="sigbox"><b>Analyst declaration</b><div>Printed name: ${esc(p.analyst||"____________________________")}</div><div class="sigline"></div><div>Signature</div><div>Date/time: ${esc(generated.local)}</div></div>
+      <div class="sigbox"><b>Independent review</b><div>Printed name: ${esc(p.reviewer||"____________________________")}</div><div class="sigline"></div><div>Reviewer signature</div><div>Date/time: ____________________________</div></div>
+    </div>
+    <div class="small">This signature block records human approval. The evidence manifest and SHA-256 values provide integrity evidence. The printed/saved PDF is not a qualified electronic signature unless signed with an approved external signing system.</div>`;
+  h+=`<h2>1. Source and file integrity</h2><table><tr><th>Evidence item</th><th>Type</th><th>Bytes</th><th>SHA-256 / CRC-32</th></tr>`;
+  for(const source of payload.sourceInputs)h+=`<tr><td>${esc(source.name)}</td><td>${esc(source.kind)}</td><td>${source.size.toLocaleString()}</td><td class="rmono">${source.sha256}</td></tr>`;
+  for(const r of RUNS)h+=`<tr><td>${esc(r.file)}</td><td>decoded IXO${r.sourceArchive?` from ${esc(r.sourceArchive.name)}`:""}</td><td>${(r.size||0).toLocaleString()}</td><td class="rmono">SHA-256 ${r.checksum||""}${r.zip?`<br>ZIP CRC-32 ${r.zip.crc32} verified`:""}</td></tr>`;
+  h+=`</table><h2>2. Graph and output evidence checksums</h2><table><tr><th>Artifact</th><th>Bytes</th><th>SHA-256</th></tr>`;
+  for(const a of payload.artifacts.filter(a=>["graph","data","reference"].includes(a.category)))h+=`<tr><td>${esc(a.path)}</td><td>${a.size.toLocaleString()}</td><td class="rmono">${a.sha256}</td></tr>`;
+  h+=`</table><h2>3. Lab profile and target-specific acceptance rules</h2>
+    <h3>Classification rules</h3><table><tr><th>#</th><th>Role</th><th>Sample regex</th></tr>${p.controlRules.map((r,i)=>`<tr><td>${i+1}</td><td>${esc(r.role)}</td><td class="rmono">${esc(r.pattern)}</td></tr>`).join("")}</table>
+    <h3>Acceptance rules</h3><table><tr><th>#</th><th>Role</th><th>Target regex</th><th>Expected</th><th>Stored Cq interval</th><th>Required</th><th>Label</th></tr>${p.qcRules.map((r,i)=>`<tr><td>${i+1}</td><td>${esc(r.role)}</td><td class="rmono">${esc(r.target)}</td><td>${esc(r.expectation)}</td><td>${r.expectation==="amplify"?`${r.min} - ${r.max}`:"ND / Negative"}</td><td>${r.required?"yes":"no"}</td><td>${esc(r.label)}</td></tr>`).join("")}</table>
+    <div>Replicate scheme: ${esc(p.replicate.mode)} - maximum spread ${p.maxReplicateSpread} cycles. Efficiency: ${p.models.wol?"Thesis WoL":""}${p.models.sliwinProxy?" + disclosed sliwin-style proxy":""}.</div>`;
+  RUNS.forEach((r,index)=>{
+    if(r.error){h+=`<div class="runsec"><h2>Run ${index+1}: ${esc(r.file)}</h2><div class="sev-Suspicious">Decode error: ${esc(r.error)}</div><div class="rmono">SHA-256 ${r.checksum}</div></div>`;return;}
+    const q=r.qc,f=r.forensic,m=r.meta,targets=[...new Set(r.wells.map(w=>w.target))];
+    h+=`<div class="runsec"><h2>Run ${index+1}: ${esc(m.name||r.file)}</h2>
+      <table><tr><td><b>Source file</b></td><td>${esc(r.file)}</td><td><b>Archive</b></td><td>${esc(r.sourceArchive?.name||"direct IXO")}</td></tr>
+      <tr><td><b>Instrument</b></td><td>${esc(m.InstrumentName)} ${esc(m.InstrumentVersion)}</td><td><b>Software</b></td><td>${esc(m.SWVersion)}</td></tr>
+      <tr><td><b>Operator</b></td><td>${esc(m.CreatedByName)}</td><td><b>Modified by</b></td><td>${esc(m.LastModifiedByName)}</td></tr>
+      <tr><td><b>Created</b></td><td>${esc(m.Created)}</td><td><b>Started / ended</b></td><td>${esc(m.StartTime)} / ${esc(m.EndTime)}</td></tr>
+      <tr><td><b>IXO SHA-256</b></td><td colspan="3" class="rmono">${r.checksum} (${r.size.toLocaleString()} bytes)</td></tr>
+      <tr><td><b>Identifiers</b></td><td colspan="3" class="rmono">${esc(JSON.stringify(r.identities))}</td></tr></table>
+      <h3>Forensic verdict - <span class="sev-${f.overall}">${f.overall}</span></h3><table><tr><th>Timestamp (instrument wall time; offset not encoded)</th><th>Event / evidence</th></tr>
+      ${f.events.map(e=>`<tr><td>${tfmt(e.t)}</td><td>${esc(e.msg)}</td></tr>`).join("")}
+      ${f.facts.map(x=>`<tr><td>-</td><td>${esc(x)}</td></tr>`).join("")}
+      ${f.flags.map(x=>`<tr><td>${esc(x.severity)}</td><td>${esc(x.message)}</td></tr>`).join("")}</table>
+      <h3>Target-specific QC - ${q.pass?"PASS":"CHECK"}</h3><table><tr><th>Type</th><th>Sample</th><th>Target</th><th>Result</th><th>Evidence</th></tr>
+      ${q.missing.map(x=>`<tr><td>missing required</td><td></td><td></td><td>FAIL</td><td>${esc(x.message)}</td></tr>`).join("")}
+      ${q.checks.map(x=>`<tr><td>${esc(x.kind)}</td><td>${esc(x.sample||"")}</td><td>${esc(x.target||"")}</td><td>${x.pass?"PASS":"FAIL"}</td><td>${esc(x.message)}</td></tr>`).join("")}</table>
+      <h3>Amplification curves and graph checksums</h3>`;
+    for(const g of graphs.filter(g=>g.run===r.file))h+=`<div><img src="${g.dataUrl}"><div class="rmono">${esc(g.name)} - SHA-256 ${g.sha256}</div></div>`;
+    h+=`<h3>Per-well stored results</h3><table><tr><th>Well</th><th>Sample</th><th>Role</th><th>Target</th><th>Stored Cq</th><th>Call</th><th>QC</th><th>WoL%</th><th>CpUncertain</th><th>CpState</th><th>Included</th></tr>
+      ${r.wells.map(w=>`<tr><td>${esc(w.well)}</td><td>${esc(w.sample)}</td><td>${esc(w.role)}</td><td>${esc(w.target)}</td><td>${w.CpRaw>0?w.CpRaw.toFixed(2):"ND (stored 0)"}</td><td>${esc(w.call)}</td><td>${esc(w.qcStatus)}</td><td>${w.effWol??""}</td><td>${esc(w.CpUncertain)}</td><td>${esc(w.CpState)}</td><td>${esc(w.IsIncluded)}</td></tr>`).join("")}</table>
+      <h3>Mean thesis WoL index by target</h3><table><tr><th>Target</th><th>Mean WoL %</th><th>n</th></tr>${targets.map(t=>{const v=r.wells.filter(w=>w.target===t&&w.effWol!=null).map(w=>w.effWol);return `<tr><td>${esc(t)}</td><td>${v.length?avg(v).toFixed(1):"-"}</td><td>${v.length}</td></tr>`;}).join("")}</table></div>`;
+  });
+  return h+`<div style="margin-top:20px" class="small">End of report. Manifest payload SHA-256: <span class="rmono">${payloadSha256}</span>. Recompute checksums from the evidence bundle before relying on this report. Apply an approved electronic signature to the final PDF when required by the laboratory quality system.</div></div>`;
+}
+$("#dlEvidence").onclick=async()=>{
+  const btn=$("#dlEvidence"),msg=$("#evidmsg");btn.disabled=true;btn.textContent="Building evidence bundle...";
+  try{
+    const evidence=await prepareEvidence(),zip=makeStoredZip(evidence.entries.map(e=>({name:e.name,data:e.data}))),name=`IXO_evidence_${new Date().toISOString().slice(0,10)}_${evidence.payloadSha256.slice(0,12)}.zip`;
+    dlBlob(name,new Blob([zip],{type:"application/zip"}));msg.innerHTML=`Evidence bundle ready - manifest SHA-256 <span class="mono">${evidence.payloadSha256}</span>`;
+  }catch(err){msg.innerHTML='<span class="err">Evidence bundle failed: '+esc(err.message)+'</span>';}
+  finally{btn.disabled=false;btn.textContent="Download complete evidence bundle (.zip)";}
+};
+$("#dlReport").onclick=async()=>{
+  const btn=$("#dlReport"),msg=$("#evidmsg");btn.disabled=true;btn.textContent="Preparing checksummed report...";
+  try{
+    const evidence=await prepareEvidence();$("#reportWrap").innerHTML=evidence.reportHtml;
+    const oldTitle=document.title;document.title=`IXO_evidence_report_${new Date().toISOString().slice(0,10)}_${evidence.payloadSha256.slice(0,12)}`;
+    window.onafterprint=()=>{document.title=oldTitle;window.onafterprint=null;};
+    msg.innerHTML=`Report prepared - manifest SHA-256 <span class="mono">${evidence.payloadSha256}</span>`;
+    setTimeout(()=>window.print(),150);
+  }catch(err){msg.innerHTML='<span class="err">Report generation failed: '+esc(err.message)+'</span>';}
+  finally{btn.disabled=false;btn.textContent="Generate signature-ready PDF report";}
+};
+function dlText(name,text,type="text/plain"){dlBlob(name,new Blob([text],{type}));}
+function dlBlob(name,blob){const url=URL.createObjectURL(blob),a=ce("a");a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),2000);}
+</script>
+</body>
+</html>
