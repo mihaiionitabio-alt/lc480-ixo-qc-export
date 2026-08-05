@@ -1098,7 +1098,7 @@ function decodePlateModel(dom){
   const plate={};                       /* pos -> record */
   const get=pos=>plate[pos]??=(plate[pos]={pos,name:"",sampleId:"",notes:"",replicateOf:null,subsets:[],channels:{}});
   const chan=(pos,idx)=>{const r=get(pos);return r.channels[idx]??=(r.channels[idx]={});};
-  const posOf=el=>{const t=pv(el,"Position");return t===""?null:parseInt(t,10);};
+  const posOf=el=>{const t=pv(el,"Position");if(t==="")return null;const n=parseInt(t,10);return Number.isFinite(n)?n:null;};
   const chanOf=el=>{const c=el.querySelector('obj[name="ChannelProp"] > prop[name="ChannelIdx"]');return c?parseInt(c.textContent,10):null;};
 
   dom.querySelectorAll('[class="GenSampleEditName"]').forEach(el=>{
@@ -1166,7 +1166,7 @@ function decodeSubsets(dom){
       subsetId:pv(el,"SubsetID"),useAll:pv(el,"UseAllSamples")==="1",items});
   });
   const seen=new Set();
-  return out.filter(s=>{const k=s.name+"|"+s.subsetId+"|"+s.items.length;if(seen.has(k))return false;seen.add(k);return true;});
+  return out.filter(s=>{const k=s.name+"|"+s.subsetId+"|"+s.items.join(",");if(seen.has(k))return false;seen.add(k);return true;});
 }
 
 function decodeProtocol(dom){
@@ -1450,7 +1450,7 @@ function ownsResult(an,o){
   }
   return true;
 }
-function analysisResults(an){
+function analysisResults(an,cols){
   const out=[];
   an.el.querySelectorAll('obj').forEach(o=>{
     if(NON_RESULT_CLASSES.test(o.getAttribute("class")||""))return;
@@ -1464,9 +1464,7 @@ function analysisResults(an){
     const posTxt=d.Pos!==undefined?d.Pos:d.Position;
     let pos;
     if(/^[A-Za-z]/.test(posTxt)){
-      const m=posTxt.match(/^([A-Za-z]+)(\d+)$/);
-      pos=m?(m[1].toUpperCase().charCodeAt(0)-65)*24+(parseInt(m[2],10)-1):NaN;  /* refined by caller */
-      pos=NaN;
+      pos=wellToPos(posTxt,cols);
     }else pos=parseInt(posTxt,10);
     if(!Number.isFinite(pos))return;
     out.push({pos,d,lists,kind:resultKindOf(d,lists)});
@@ -1553,7 +1551,7 @@ async function decodeIxo(source,geomPref){
       ? `${a.numeratorXWL}-${a.numeratorEWL??(chDef?chDef.em:"")}`
       : (chDef?`${chDef.ex}-${chDef.em}`:"");
     if(a.denominatorXWL!=null)a.filterComb+=" / "+a.denominatorXWL+"-"+(a.denominatorEWL??"");
-    const recs=analysisResults(a);
+    const recs=analysisResults(a,cols);
     a.nResults=recs.length;
     a.resultKinds=uniq(recs.map(r=>r.kind));
     recs.forEach(rec=>{
